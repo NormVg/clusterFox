@@ -1,0 +1,29 @@
+{
+    "name": "cluster-fox-dashboard",
+    "author": "cook",
+    "stir": true,
+    "cmd": {
+        "serve": [
+            "pnpm run dev"
+        ],
+        "build": [
+            "pnpm install"
+        ],
+        "clean": [
+            "rm -rf node_modules"
+        ]
+    },
+    "template": {
+        "name": "nuxt-v3",
+        "category": "nuxt",
+        "version": "3.20.0",
+        "stack": [
+            "nuxt",
+            "js",
+            "ts",
+            "css",
+            "pnpm"
+        ],
+        "github": "https://github.com/nuxt/nuxt"
+    }
+}
