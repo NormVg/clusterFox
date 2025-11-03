@@ -32,6 +32,9 @@ importers:
       vue:
         specifier: ^3.5.22
         version: 3.5.22
+      vue-chartjs:
+        specifier: ^5.3.2
+        version: 5.3.2(chart.js@4.5.1)(vue@3.5.22)
       vue-router:
         specifier: ^4.6.3
         version: 4.6.3(vue@3.5.22)
@@ -3114,6 +3117,12 @@ packages:
 
   vue-bundle-renderer@2.2.0:
     resolution: {integrity: sha512-sz/0WEdYH1KfaOm0XaBmRZOWgYTEvUDt6yPYaUzl4E52qzgWLlknaPPTTZmp6benaPTlQAI/hN1x3tAzZygycg==}
+
+  vue-chartjs@5.3.2:
+    resolution: {integrity: sha512-NrkbRRoYshbXbWqJkTN6InoDVwVb90C0R7eAVgMWcB9dPikbruaOoTFjFYHE/+tNPdIe6qdLCDjfjPHQ0fw4jw==}
+    peerDependencies:
+      chart.js: ^4.1.1
+      vue: ^3.0.0-0 || ^2.7.0
 
   vue-demi@0.14.10:
     resolution: {integrity: sha512-nMZBOwuzabUO0nLgIcc6rycZEebF6eeUfaiQx9+WSk8e29IbLvPU9feI6tqW4kTo3hvoYAJkMh8n8D0fuISphg==}
@@ -6603,6 +6612,11 @@ snapshots:
   vue-bundle-renderer@2.2.0:
     dependencies:
       ufo: 1.6.1
+
+  vue-chartjs@5.3.2(chart.js@4.5.1)(vue@3.5.22):
+    dependencies:
+      chart.js: 4.5.1
+      vue: 3.5.22
 
   vue-demi@0.14.10(vue@3.5.22):
     dependencies:

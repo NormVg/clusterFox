@@ -72,6 +72,7 @@
 
 <script setup>
 import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { useSettingsStore } from '~/stores/settings'
 
 const stats = ref({
   activeModules: 0,
@@ -168,9 +169,13 @@ const formatNumber = (num) => {
   return num.toString()
 }
 
-onMounted(() => {
+onMounted(async () => {
+  const settingsStore = useSettingsStore()
+  await settingsStore.loadSettings()
+  const intervalMs = (settingsStore.refreshInterval || 10) * 1000
+  
   fetchStats()
-  refreshInterval = setInterval(fetchStats, 5000) // Refresh every 5 seconds (faster updates)
+  refreshInterval = setInterval(fetchStats, intervalMs)
 
   // Update uptime every minute
   setInterval(() => {

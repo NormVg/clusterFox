@@ -34,6 +34,7 @@
 <script setup>
 import { ref, watch, onMounted, onUnmounted, nextTick } from 'vue'
 import { useRealtimeChart } from '~/composables/useRealtimeChart'
+import { useSettingsStore } from '~/stores/settings'
 import ChartControls from './ChartControls.vue'
 import {
   Chart,
@@ -225,11 +226,15 @@ watch([dataPoints, selectedDataField], () => {
 
 onMounted(async () => {
   console.log('🚀 RealtimeChart mounted')
+  const settingsStore = useSettingsStore()
+  await settingsStore.loadSettings()
+  const intervalMs = (settingsStore.refreshInterval || 10) * 1000
+  
   await fetchData()
   refreshInterval = setInterval(() => {
     console.log('⏰ Auto-refresh triggered')
     fetchData()
-  }, 10000) // Refresh every 10 seconds
+  }, intervalMs)
 })
 
 onUnmounted(() => {

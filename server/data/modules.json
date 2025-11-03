@@ -9,9 +9,9 @@
         "temp"
       ],
       "registeredAt": "2025-11-01T13:44:14.040Z",
-      "lastSeen": "2025-11-02T16:55:15.624Z",
+      "lastSeen": "2025-11-03T03:51:40.816Z",
       "status": "active",
-      "dataCount": 208,
+      "dataCount": 237,
       "sessionCreatedAt": "2025-11-02T08:51:50.265Z",
       "triggers": {
         "humi": {

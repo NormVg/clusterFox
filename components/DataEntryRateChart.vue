@@ -46,6 +46,7 @@
 <script setup>
 import { ref, watch, onMounted, onUnmounted, nextTick } from 'vue'
 import { useDataEntryRate } from '~/composables/useDataEntryRate'
+import { useSettingsStore } from '~/stores/settings'
 import {
   Chart,
   BarController,
@@ -203,6 +204,10 @@ watch(entryRateData, () => {
 
 onMounted(async () => {
   console.log('🚀 DataEntryRateChart mounted')
+  const settingsStore = useSettingsStore()
+  await settingsStore.loadSettings()
+  const intervalMs = (settingsStore.refreshInterval || 10) * 1000
+  
   await nextTick() // Ensure DOM is ready
   await fetchSensorData()
   nextTick(() => {
@@ -211,7 +216,7 @@ onMounted(async () => {
   refreshInterval = setInterval(() => {
     console.log('⏰ Refreshing data entry rate')
     fetchSensorData()
-  }, 30000) // Refresh every 30 seconds
+  }, intervalMs)
 })
 
 onUnmounted(() => {

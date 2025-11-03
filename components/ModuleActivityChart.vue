@@ -74,6 +74,7 @@
 <script setup>
 import { ref, watch, onMounted, onUnmounted, nextTick } from 'vue'
 import { useModuleActivity } from '~/composables/useModuleActivity'
+import { useSettingsStore } from '~/stores/settings'
 import {
   Chart,
   DoughnutController,
@@ -228,6 +229,10 @@ watch([statusCounts, totalModules], () => {
 
 onMounted(async () => {
   console.log('🚀 ModuleActivityChart mounted')
+  const settingsStore = useSettingsStore()
+  await settingsStore.loadSettings()
+  const intervalMs = (settingsStore.refreshInterval || 10) * 1000
+  
   await nextTick() // Ensure DOM is ready
   await fetchModules()
   nextTick(() => {
@@ -236,7 +241,7 @@ onMounted(async () => {
   refreshInterval = setInterval(() => {
     console.log('⏰ Refreshing module activity')
     fetchModules()
-  }, 10000) // Refresh every 10 seconds
+  }, intervalMs)
 })
 
 onUnmounted(() => {

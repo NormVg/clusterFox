@@ -77,6 +77,26 @@
         </div>
       </div>
 
+      <!-- Emergency Timeline Graph -->
+      <div class="timeline-graph">
+        <div class="graph-header">
+          <div>
+            <h4>Emergency Timeline</h4>
+            <p>Emergency modules count over the last 24 hours</p>
+          </div>
+          <div v-if="historyData.length > 0" class="last-tracked">
+            <span v-if="historyData[historyData.length - 1].eventType">
+              {{ getEventEmoji(historyData[historyData.length - 1].eventType) }}
+            </span>
+            Last event: {{ formatLastTracked(historyData[historyData.length - 1].timestamp) }}
+            • {{ historyData.length }} events recorded
+          </div>
+        </div>
+        <div class="chart-container">
+          <Line :data="chartData" :options="chartOptions" />
+        </div>
+      </div>
+
       <!-- No Emergencies State -->
       <div v-if="emergencyModules.length === 0" class="no-emergencies">
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -152,13 +172,121 @@
 </template>
 
 <script setup>
-import { computed } from 'vue'
+import { computed, ref, onMounted } from 'vue'
+import { Line } from 'vue-chartjs'
+import {
+  Chart as ChartJS,
+  CategoryScale,
+  LinearScale,
+  PointElement,
+  LineElement,
+  Title,
+  Tooltip,
+  Legend,
+  Filler
+} from 'chart.js'
 import { useEmergencyAnalytics } from '~/composables/useEmergencyAudio'
+
+// Register Chart.js components
+ChartJS.register(
+  CategoryScale,
+  LinearScale,
+  PointElement,
+  LineElement,
+  Title,
+  Tooltip,
+  Legend,
+  Filler
+)
 
 const {
   emergencyModules,
   isLoading
 } = useEmergencyAnalytics()
+
+// Timeline data from server
+const historyData = ref([])
+const lastRecordedCount = ref(-1)
+
+// Fetch historical data
+const fetchHistory = async () => {
+  try {
+    const response = await $fetch('/api/emergency-history')
+    if (response.success && response.history) {
+      historyData.value = response.history
+    }
+  } catch (error) {
+    console.error('Error fetching emergency history:', error)
+  }
+}
+
+// Save current emergency count to history using intelligent tracker
+const saveToHistory = async (force = false) => {
+  const currentCount = emergencyModules.value?.length || 0
+  
+  // Only save if count changed or forced
+  if (!force && currentCount === lastRecordedCount.value) return
+  
+  lastRecordedCount.value = currentCount
+  
+  try {
+    // Use the intelligent emergency tracker that checks actual sensor data
+    const response = await $fetch('/api/emergency-tracker', {
+      method: 'POST'
+    })
+    
+    console.log('✅ Tracked emergency state:', response)
+    
+    // Refresh history after saving
+    await fetchHistory()
+  } catch (error) {
+    console.error('❌ Error tracking emergency:', error)
+  }
+}
+
+// Track which modules are in emergency to detect state changes
+const emergencyUMIDs = ref(new Set())
+
+// Watch for emergency module changes and save only on state transitions
+watch(emergencyModules, async (newModules) => {
+  const newUMIDs = new Set(newModules?.map(m => m.umid) || [])
+  const oldUMIDs = emergencyUMIDs.value
+  
+  // Check if any module entered or exited emergency state
+  const entered = [...newUMIDs].filter(umid => !oldUMIDs.has(umid))
+  const exited = [...oldUMIDs].filter(umid => !newUMIDs.has(umid))
+  
+  if (entered.length > 0 || exited.length > 0) {
+    console.log('🚨 EMERGENCY STATE CHANGE DETECTED:')
+    if (entered.length > 0) {
+      console.log('  ✅ Entered emergency:', entered)
+    }
+    if (exited.length > 0) {
+      console.log('  ✅ Exited emergency:', exited)
+    }
+    console.log(`  📊 Count: ${oldUMIDs.size} → ${newUMIDs.size}`)
+    
+    // Save this event to history
+    await saveToHistory(true)
+  }
+  
+  // Update tracked state
+  emergencyUMIDs.value = newUMIDs
+}, { deep: true })
+
+// Initialize
+onMounted(async () => {
+  await fetchHistory()
+  
+  // Initialize the emergency state tracking
+  emergencyUMIDs.value = new Set(emergencyModules.value?.map(m => m.umid) || [])
+  
+  // Save initial state if there are emergencies
+  if (emergencyUMIDs.value.size > 0) {
+    console.log('🚨 Initial emergency state detected:', emergencyUMIDs.value.size, 'modules')
+    await saveToHistory(true)
+  }
+})
 
 // Compute stats from emergency modules
 const stats = computed(() => {
@@ -171,6 +299,187 @@ const stats = computed(() => {
     moduleTypes: uniqueTypes.size
   }
 })
+
+// Process historical data for Chart.js - preserve ALL events
+const processedData = computed(() => {
+  const now = Date.now()
+  const twentyFourHoursAgo = now - 24 * 60 * 60 * 1000
+  
+  // Start with actual historical events (not grouped by hour)
+  let dataPoints = []
+  
+  if (historyData.value.length > 0) {
+    // Filter events from last 24 hours and map to data points
+    dataPoints = historyData.value
+      .filter(entry => new Date(entry.timestamp).getTime() > twentyFourHoursAgo)
+      .map(entry => ({
+        timestamp: entry.timestamp,
+        count: entry.count,
+        eventType: entry.eventType
+      }))
+  }
+  
+  // Add current live data as the most recent point if it's different from last recorded
+  const currentCount = emergencyModules.value?.length || 0
+  const lastRecorded = dataPoints.length > 0 ? dataPoints[dataPoints.length - 1] : null
+  
+  // Only add current if it's different from last recorded or if there's no history
+  if (!lastRecorded || lastRecorded.count !== currentCount) {
+    dataPoints.push({
+      timestamp: new Date().toISOString(),
+      count: currentCount,
+      eventType: null // Current live data has no event type
+    })
+  }
+  
+  // If no data at all, create a baseline
+  if (dataPoints.length === 0) {
+    // Create baseline with start and end points
+    dataPoints = [
+      {
+        timestamp: new Date(twentyFourHoursAgo).toISOString(),
+        count: 0,
+        eventType: null
+      },
+      {
+        timestamp: new Date().toISOString(),
+        count: currentCount,
+        eventType: null
+      }
+    ]
+  }
+  
+  // Sort by timestamp
+  const sorted = dataPoints.sort((a, b) => 
+    new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()
+  )
+  
+  console.log('📊 Graph data points:', sorted.map(d => ({
+    time: new Date(d.timestamp).toLocaleString(),
+    count: d.count,
+    event: d.eventType
+  })))
+  
+  return sorted
+})
+
+// Chart.js data configuration
+const chartData = computed(() => {
+  const data = processedData.value
+  
+  return {
+    labels: data.map(d => {
+      const date = new Date(d.timestamp)
+      // Show time with minutes for more precision
+      return date.toLocaleTimeString('en-US', { 
+        hour: 'numeric', 
+        minute: '2-digit',
+        hour12: true 
+      })
+    }),
+    datasets: [
+      {
+        label: 'Emergency Modules',
+        data: data.map(d => d.count),
+        borderColor: '#dc2626',
+        backgroundColor: 'rgba(220, 38, 38, 0.1)',
+        fill: true,
+        tension: 0.4, // Smooth curve
+        stepped: false,
+        pointRadius: data.map(d => d.eventType ? 7 : 4),
+        pointBackgroundColor: data.map(d => {
+          if (d.eventType === 'emergency_ended') return '#10b981'
+          if (d.eventType === 'emergency_started') return '#dc2626'
+          if (d.eventType === 'emergency_changed') return '#f59e0b'
+          return '#6b7280' // Gray for non-event points
+        }),
+        pointBorderColor: '#ffffff',
+        pointBorderWidth: 2,
+        pointHoverRadius: 10,
+        pointHoverBorderWidth: 3
+      }
+    ]
+  }
+})
+
+// Chart.js options configuration
+const chartOptions = computed(() => ({
+  responsive: true,
+  maintainAspectRatio: false,
+  plugins: {
+    legend: {
+      display: false
+    },
+    tooltip: {
+      backgroundColor: 'rgba(0, 0, 0, 0.8)',
+      padding: 12,
+      titleColor: '#ffffff',
+      bodyColor: '#ffffff',
+      borderColor: '#dc2626',
+      borderWidth: 1,
+      displayColors: false,
+      callbacks: {
+        title: (context) => {
+          const index = context[0].dataIndex
+          const d = processedData.value[index]
+          const date = new Date(d.timestamp)
+          return date.toLocaleString('en-US', { 
+            month: 'short', 
+            day: 'numeric',
+            hour: 'numeric',
+            minute: '2-digit',
+            hour12: true 
+          })
+        },
+        label: (context) => {
+          const index = context.dataIndex
+          const d = processedData.value[index]
+          const count = context.parsed.y
+          const countText = `${count} ${count === 1 ? 'emergency' : 'emergencies'}`
+          
+          if (d.eventType) {
+            const eventLabels = {
+              'emergency_started': '🚨 Emergency Started',
+              'emergency_ended': '✅ Emergency Ended',
+              'emergency_changed': '⚠️ Emergency Changed'
+            }
+            return [countText, eventLabels[d.eventType] || d.eventType]
+          }
+          
+          return countText
+        }
+      }
+    }
+  },
+  scales: {
+    y: {
+      beginAtZero: true,
+      ticks: {
+        stepSize: 1,
+        color: 'rgba(156, 163, 175, 0.8)'
+      },
+      grid: {
+        color: 'rgba(100, 100, 100, 0.1)'
+      }
+    },
+    x: {
+      ticks: {
+        color: 'rgba(156, 163, 175, 0.8)',
+        maxRotation: 45,
+        autoSkip: true,
+        maxTicksLimit: 12, // Show more labels for detailed timeline
+        font: {
+          size: 10
+        }
+      },
+      grid: {
+        display: false
+      }
+    }
+  }
+}))
+
+// Chart.js handles all rendering, so old SVG computations are removed
 
 const error = computed(() => null)
 
@@ -192,6 +501,39 @@ const getTimeAgo = (timestamp) => {
   return `${diffDays}d ago`
 }
 
+const formatLastTracked = (timestamp) => {
+  const date = new Date(timestamp)
+  const now = new Date()
+  const diffMs = now - date
+  const diffMins = Math.floor(diffMs / 60000)
+
+  if (diffMins < 1) return 'just now'
+  if (diffMins < 60) return `${diffMins} min ago`
+  
+  const diffHours = Math.floor(diffMins / 60)
+  if (diffHours < 24) {
+    return `${diffHours} hour${diffHours > 1 ? 's' : ''} ago at ${date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true })}`
+  }
+  
+  return date.toLocaleString('en-US', { 
+    month: 'short', 
+    day: 'numeric', 
+    hour: 'numeric', 
+    minute: '2-digit',
+    hour12: true 
+  })
+}
+
+const getEventEmoji = (eventType) => {
+  const emojis = {
+    'emergency_started': '🚨',
+    'emergency_ended': '✅',
+    'emergency_changed': '⚠️',
+    'update': '📊'
+  }
+  return emojis[eventType] || '📝'
+}
+
 // No need for onMounted/onUnmounted - the composable handles auto-refresh
 </script>
 
@@ -201,6 +543,10 @@ const getTimeAgo = (timestamp) => {
   border-radius: 0.75rem;
   padding: 1.5rem;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+  box-sizing: border-box;
 }
 
 .header {
@@ -289,12 +635,68 @@ const getTimeAgo = (timestamp) => {
   display: flex;
   flex-direction: column;
   gap: 1.5rem;
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
 }
 
 .stats-row {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
   gap: 1rem;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+/* Timeline Graph */
+.timeline-graph {
+  background: var(--bg);
+  border-radius: 0.75rem;
+  border: 1px solid var(--border);
+  padding: 1.5rem;
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+.graph-header {
+  margin-bottom: 1.5rem;
+}
+
+.graph-header h4 {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0 0 0.25rem 0;
+}
+
+.graph-header p {
+  font-size: 0.813rem;
+  color: var(--text-secondary);
+  margin: 0 0 1rem 0;
+}
+
+.last-tracked {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  padding: 0.5rem 0.75rem;
+  background: rgba(220, 38, 38, 0.05);
+  border-radius: 0.375rem;
+  border-left: 3px solid #dc2626;
+}
+
+/* Chart.js Container */
+.chart-container {
+  position: relative;
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+  height: 300px;
+  background: var(--surface);
+  border-radius: 0.5rem;
+  padding: 1rem;
+  box-sizing: border-box;
 }
 
 .stat-card {

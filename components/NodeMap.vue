@@ -1,5 +1,6 @@
 <script setup>
 import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
+import { useSettingsStore } from '~/stores/settings'
 
 const props = defineProps({
   initialNodes: {
@@ -398,15 +399,19 @@ const handleWheel = (event) => {
 }
 
 // Lifecycle
-onMounted(() => {
+onMounted(async () => {
+  const settingsStore = useSettingsStore()
+  await settingsStore.loadSettings()
+  const intervalMs = (settingsStore.refreshInterval || 10) * 1000
+  
   window.addEventListener('mousemove', handleMouseMove)
   window.addEventListener('mouseup', handleMouseUp)
 
   // Initial fetch
   fetchModules()
 
-  // Auto-refresh every 5 seconds
-  refreshInterval = setInterval(fetchModules, 5000)
+  // Auto-refresh using settings interval
+  refreshInterval = setInterval(fetchModules, intervalMs)
 })
 
 onUnmounted(() => {

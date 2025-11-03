@@ -20,20 +20,22 @@
           />
         </div>
 
-        <!-- Data Entry Rate Chart -->
-        <div class="grid-item half-width">
-          <DataEntryRateChart />
-        </div>
-
-        <!-- Module Activity Status Chart -->
-        <div class="grid-item half-width">
-          <ModuleActivityChart />
-        </div>
 
         <!-- Emergency Analytics Chart -->
         <div class="grid-item full-width">
           <EmergencyAnalyticsChart />
         </div>
+        <br>
+        <!-- Data Entry Rate Chart -->
+        <div class="grid-item full-width">
+          <DataEntryRateChart />
+        </div>
+
+        <!-- Module Activity Status Chart -->
+        <div class="grid-item full-width">
+          <ModuleActivityChart />
+        </div>
+
       </div>
     </div>
   </NuxtLayout>

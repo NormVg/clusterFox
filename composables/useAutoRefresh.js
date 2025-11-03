@@ -1,22 +1,29 @@
 // Composable for auto-refresh functionality
-import { ref, onUnmounted, unref } from 'vue'
+import { ref, onUnmounted, unref, computed } from 'vue'
+import { useSettingsStore } from '~/stores/settings'
 
-export const useAutoRefresh = (callback, intervalMs = 5000) => {
+export const useAutoRefresh = (callback, intervalMs = null) => {
+  const settingsStore = useSettingsStore()
   const isRefreshing = ref(false)
   let intervalId = null
-  let currentInterval = unref(intervalMs)
+  
+  // Use settings refreshInterval if no interval provided, otherwise use provided interval
+  const currentInterval = computed(() => {
+    if (intervalMs !== null) {
+      return unref(intervalMs)
+    }
+    return (settingsStore.refreshInterval || 10) * 1000 // Convert seconds to ms
+  })
 
   const startAutoRefresh = (newInterval) => {
-    // Use new interval if provided, otherwise use current
-    if (newInterval !== undefined) {
-      currentInterval = unref(newInterval)
-    }
-
     // Stop existing interval if any
     if (intervalId) {
       clearInterval(intervalId)
       intervalId = null
     }
+
+    // Get interval to use (newInterval overrides, otherwise use computed currentInterval)
+    const intervalToUse = newInterval !== undefined ? unref(newInterval) : currentInterval.value
 
     // Start new interval
     intervalId = setInterval(async () => {
@@ -29,9 +36,9 @@ export const useAutoRefresh = (callback, intervalMs = 5000) => {
       } finally {
         isRefreshing.value = false
       }
-    }, currentInterval)
+    }, intervalToUse)
 
-    console.log(`🔄 Auto-refresh started (${currentInterval / 1000}s interval)`)
+    console.log(`🔄 Auto-refresh started (${intervalToUse / 1000}s interval)`)
   }
 
   const stopAutoRefresh = () => {
