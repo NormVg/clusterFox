@@ -15,18 +15,16 @@
     </div>
 
     <nav class="sidebar-nav">
-      <a
+      <NuxtLink
         v-for="item in navItems"
         :key="item.id"
-        href="#"
+        :to="item.route"
         class="nav-item"
-        :class="{ 'active': activeNav === item.id }"
-        @click.prevent="handleNavClick(item.id)"
         :title="item.label"
       >
         <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" v-html="item.icon"></svg>
         <span v-show="!isCollapsed" class="nav-label">{{ item.label }}</span>
-      </a>
+      </NuxtLink>
     </nav>
 
     <div class="sidebar-footer">
@@ -47,70 +45,76 @@
         </svg>
         <span v-show="!isCollapsed">{{ isDark ? 'Light' : 'Dark' }}</span>
       </button>
-
-      <div class="user-profile" v-if="!isCollapsed">
-        <div class="user-avatar">JD</div>
-        <div class="user-info">
-          <div class="user-name">John Doe</div>
-          <div class="user-email">john@example.com</div>
-        </div>
-      </div>
-      <div class="user-avatar-only" v-else title="John Doe">
-        <div class="user-avatar">JD</div>
-      </div>
     </div>
   </aside>
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
+import { useRoute } from 'vue-router'
 
 const props = defineProps({
   isCollapsed: Boolean,
   isDark: Boolean
 })
 
-const emit = defineEmits(['toggle', 'toggle-theme', 'nav-change'])
+const emit = defineEmits(['toggle', 'toggle-theme'])
 
-const activeNav = ref('dashboard')
+const route = useRoute()
+
+// Compute active route based on current URL
+const currentRoute = computed(() => route.path)
 
 const navItems = ref([
   {
     id: 'dashboard',
     label: 'Dashboard',
+    route: '/',
     icon: '<rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/>'
+  },
+  {
+    id: 'modules',
+    label: 'Modules',
+    route: '/modules',
+    icon: '<rect x="2" y="2" width="20" height="8" rx="2" ry="2"/><rect x="2" y="14" width="20" height="8" rx="2" ry="2"/><line x1="6" y1="6" x2="6.01" y2="6"/><line x1="6" y1="18" x2="6.01" y2="18"/>'
   },
   {
     id: 'analytics',
     label: 'Analytics',
+    route: '/analytics',
     icon: '<line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/>'
   },
   {
-    id: 'users',
-    label: 'Users',
-    icon: '<path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>'
+    id: 'sensors',
+    label: 'Sensor Data',
+    route: '/sensors',
+    icon: '<polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>'
+  },
+  {
+    id: 'network',
+    label: 'Network Map',
+    route: '/network',
+    icon: '<circle cx="12" cy="12" r="2"/><path d="M16.24 7.76a6 6 0 0 1 0 8.49m-8.48-.01a6 6 0 0 1 0-8.49m11.31-2.82a10 10 0 0 1 0 14.14m-14.14 0a10 10 0 0 1 0-14.14"/>'
+  },
+  {
+    id: 'cutoff-modules',
+    label: 'Cutoff Modules',
+    route: '/cutoff-modules',
+    icon: '<path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/>'
   },
   {
     id: 'settings',
     label: 'Settings',
-    icon: '<circle cx="12" cy="12" r="3"/><path d="M12 1v6m0 6v6m9-9h-6m-6 0H3"/>'
+    route: '/settings',
+    icon: '<circle cx="12" cy="12" r="3"/><path d="M12 1v6m0 6v6M5.64 5.64l4.24 4.24m4.24 4.24l4.24 4.24M1 12h6m6 0h6M5.64 18.36l4.24-4.24m4.24-4.24l4.24-4.24"/>'
   },
   {
-    id: 'reports',
-    label: 'Reports',
+    id: 'api-docs',
+    label: 'API Docs',
+    route: '/api-docs',
     icon: '<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/>'
-  },
-  {
-    id: 'notifications',
-    label: 'Notifications',
-    icon: '<path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/>'
   }
 ])
-
-const handleNavClick = (id) => {
-  activeNav.value = id
-  emit('nav-change', id)
-}
 </script>
 
 <style scoped>
@@ -237,12 +241,16 @@ const handleNavClick = (id) => {
   transform: translateX(2px);
 }
 
-.nav-item.active {
+.nav-item.active,
+.nav-item.router-link-active,
+.nav-item.router-link-exact-active {
   background: var(--bg);
   color: var(--text-primary);
 }
 
-.nav-item.active::before {
+.nav-item.active::before,
+.nav-item.router-link-active::before,
+.nav-item.router-link-exact-active::before {
   height: 60%;
 }
 
@@ -306,76 +314,7 @@ const handleNavClick = (id) => {
   padding: 0;
 }
 
-.user-avatar-only {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0.625rem;
-  cursor: pointer;
-  border-radius: 8px;
-  transition: background 0.2s ease;
-}
 
-.user-avatar-only:hover {
-  background: var(--bg);
-}
-
-.user-profile {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  padding: 0.625rem 0.75rem;
-  border-radius: 8px;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  animation: fadeIn 0.3s ease;
-}
-
-.user-profile:hover {
-  background: var(--bg);
-  transform: translateY(-1px);
-}
-
-.user-avatar {
-  width: 36px;
-  height: 36px;
-  border-radius: 50%;
-  background: var(--accent);
-  color: var(--surface);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 0.813rem;
-  font-weight: 600;
-  flex-shrink: 0;
-  transition: transform 0.2s ease;
-}
-
-.user-profile:hover .user-avatar {
-  transform: scale(1.05);
-}
-
-.user-info {
-  flex: 1;
-  min-width: 0;
-}
-
-.user-name {
-  font-size: 0.875rem;
-  font-weight: 500;
-  color: var(--text-primary);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.user-email {
-  font-size: 0.75rem;
-  color: var(--text-secondary);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
 
 @keyframes fadeIn {
   from {

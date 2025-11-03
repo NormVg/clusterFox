@@ -1,0 +1,22 @@
+meta {
+  name: pool
+  type: http
+  seq: 2
+}
+
+get {
+  url: http://localhost:3000/api/pool?session_id=b5c70216fcefefca70df5d7ebe689f46ded518977f85da37a1f23d039adabac9&temp=1235555&humi=876687
+  body: none
+  auth: inherit
+}
+
+params:query {
+  session_id: b5c70216fcefefca70df5d7ebe689f46ded518977f85da37a1f23d039adabac9
+  temp: 1235555
+  humi: 876687
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

@@ -1,286 +1,310 @@
 <template>
-  <div class="dashboard" :class="{ 'dark': isDark, 'sidebar-collapsed': isSidebarCollapsed }">
-    <!-- Sidebar Component -->
-    <Sidebar
-      :is-collapsed="isSidebarCollapsed"
-      :is-dark="isDark"
-      @toggle="toggleSidebar"
-      @toggle-theme="toggleTheme"
-    />
-
-    <!-- Main Content -->
-    <main class="main">
-      <div class="main-container">
-        <!-- Stats Grid -->
-        <div class="stats">
-          <StatCard label="Total Users" value="2,543" change="+12.5%" change-type="positive" />
-          <StatCard label="Revenue" value="$45.2K" change="+8.2%" change-type="positive" />
-          <StatCard label="Active Sessions" value="342" change="-2.4%" change-type="negative" />
-          <StatCard label="Uptime" value="99.9%" change="+0.1%" change-type="positive" />
+  <NuxtLayout>
+    <div class="dashboard-page">
+      <!-- Page Header -->
+      <div class="page-header">
+        <div class="header-content">
+          <h1>Dashboard</h1>
+          <p>Real-time overview of your IoT network</p>
         </div>
-
-        <!-- Content Grid -->
-        <div class="grid">
-          <ActivityCard />
-          <SystemOverview />
-          <QuickActions />
-        </div>
-
-        <!-- Data Logger (Full Width) -->
-        <div class="full-width-section">
-          <DataLogger />
-        </div>
-
-        <!-- Node Map (Full Width) -->
-        <div class="full-width-section">
-          <NodeMap
-            @node-added="handleNodeAdded"
-            @node-updated="handleNodeUpdated"
-            @node-deleted="handleNodeDeleted"
-            @node-selected="handleNodeSelected"
-          />
+        <div class="header-actions">
+          <button class="refresh-btn" @click="refreshAll" :disabled="refreshing">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" :class="{ spinning: refreshing }">
+              <polyline points="23 4 23 10 17 10"/>
+              <polyline points="1 20 1 14 7 14"/>
+              <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>
+            </svg>
+            Refresh
+          </button>
         </div>
       </div>
-    </main>
-  </div>
+
+      <!-- Stats Overview -->
+      <div class="stats-grid">
+        <StatCard
+          label="Active Modules"
+          :value="stats.activeModules.toString()"
+          :change="`${stats.totalModules} total`"
+          change-type="info"
+        />
+        <StatCard
+          label="Sensor Readings"
+          :value="stats.totalReadings.toString()"
+          :change="`${stats.dataRate}/min`"
+          change-type="positive"
+        />
+        <StatCard
+          label="System Status"
+          :value="stats.systemStatus"
+          :change="stats.uptime"
+          change-type="positive"
+        />
+        <StatCard
+          label="Active Alerts"
+          :value="stats.activeAlerts.toString()"
+          :change="stats.alertsChange"
+          :change-type="stats.activeAlerts > 0 ? 'negative' : 'positive'"
+        />
+      </div>
+
+      <!-- Main Content Grid -->
+      <div class="content-grid">
+        <!-- System Health -->
+        <div class="grid-section full-width">
+          <SystemHealth />
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="grid-section full-width">
+          <QuickActions />
+        </div>
+      </div>
+    </div>
+  </NuxtLayout>
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
-import Sidebar from '~/components/Sidebar.vue'
+import { ref, onMounted, onUnmounted, watch } from 'vue'
+import { useSettingsStore } from '~/stores/settings'
 import StatCard from '~/components/StatCard.vue'
-import ActivityCard from '~/components/ActivityCard.vue'
-import SystemOverview from '~/components/SystemOverview.vue'
+import SystemHealth from '~/components/SystemHealth.vue'
 import QuickActions from '~/components/QuickActions.vue'
-import DataLogger from '~/components/DataLogger.vue'
-import NodeMap from '~/components/NodeMap.vue'
 
-// Sidebar collapse state
-const isSidebarCollapsed = ref(false)
-
-const toggleSidebar = () => {
-  isSidebarCollapsed.value = !isSidebarCollapsed.value
-  localStorage.setItem('sidebarCollapsed', isSidebarCollapsed.value ? 'true' : 'false')
-}
-
-// Theme management
-const isDark = ref(false)
-
-const toggleTheme = () => {
-  isDark.value = !isDark.value
-  localStorage.setItem('theme', isDark.value ? 'dark' : 'light')
-}
-
-// Load theme and sidebar state from localStorage
-onMounted(() => {
-  const savedTheme = localStorage.getItem('theme')
-  isDark.value = savedTheme === 'dark'
-
-  const savedSidebarState = localStorage.getItem('sidebarCollapsed')
-  isSidebarCollapsed.value = savedSidebarState === 'true'
+const settingsStore = useSettingsStore()
+const refreshing = ref(false)
+const stats = ref({
+  activeModules: 0,
+  totalModules: 0,
+  totalReadings: 0,
+  dataRate: 0,
+  systemStatus: 'Healthy',
+  uptime: '0m',
+  activeAlerts: 0,
+  alertsChange: 'No alerts'
 })
 
-// Node Map event handlers
-const handleNodeAdded = (node) => {
-  console.log('Node added:', node)
+const startTime = Date.now()
+let refreshInterval = null
+
+const fetchStats = async () => {
+  try {
+    // Fetch modules with cache-busting
+    const modulesResponse = await fetch(`/api/modules?_t=${Date.now()}`, {
+      headers: {
+        'Cache-Control': 'no-cache, no-store, must-revalidate'
+      }
+    })
+    const modulesData = await modulesResponse.json()
+
+    if (modulesData.success) {
+      // Use the status calculated by the API (respects settings)
+      const activeModules = modulesData.modules.filter(m => m.status === 'active')
+
+      stats.value.activeModules = activeModules.length
+      stats.value.totalModules = modulesData.modules.length
+      stats.value.systemStatus = activeModules.length === modulesData.modules.length ? 'Healthy' : 'Degraded'
+    }
+
+    // Fetch sensor data
+    const sensorResponse = await fetch('/api/sensor-data?limit=1000')
+    const sensorData = await sensorResponse.json()
+
+    if (sensorData.success) {
+      stats.value.totalReadings = sensorData.data.length
+
+      // Calculate data rate
+      const oneMinuteAgo = Date.now() - 60000
+      const recentReadings = sensorData.data.filter(r =>
+        new Date(r.timestamp).getTime() > oneMinuteAgo
+      )
+      stats.value.dataRate = recentReadings.length
+
+      // Count alerts (high temperature or abnormal values)
+      const alerts = sensorData.data.filter(r => {
+        const temp = r.data?.temperature
+        const value = r.data?.value
+        return (temp && temp > 35) || (value && (value < 10 || value > 90))
+      }).length
+
+      stats.value.activeAlerts = alerts
+      stats.value.alertsChange = alerts > 0 ? `${alerts} issues detected` : 'All good'
+    }
+
+    // Update uptime
+    const uptime = Date.now() - startTime
+    const hours = Math.floor(uptime / 3600000)
+    const minutes = Math.floor((uptime % 3600000) / 60000)
+    stats.value.uptime = hours > 0 ? `${hours}h ${minutes}m` : `${minutes}m`
+
+  } catch (error) {
+    console.error('Error fetching stats:', error)
+  }
 }
 
-const handleNodeUpdated = (node) => {
-  console.log('Node updated:', node)
+const refreshAll = async () => {
+  refreshing.value = true
+  await fetchStats()
+  setTimeout(() => {
+    refreshing.value = false
+  }, 500)
 }
 
-const handleNodeDeleted = (node) => {
-  console.log('Node deleted:', node)
+const setupAutoRefresh = () => {
+  if (refreshInterval) {
+    clearInterval(refreshInterval)
+  }
+
+  if (settingsStore.enableAutoRefresh) {
+    const intervalMs = settingsStore.refreshInterval * 1000
+    console.log(`[Dashboard] Auto-refresh enabled: every ${settingsStore.refreshInterval}s`)
+    refreshInterval = setInterval(fetchStats, intervalMs)
+  } else {
+    console.log('[Dashboard] Auto-refresh disabled')
+  }
 }
 
-const handleNodeSelected = (node) => {
-  console.log('Node selected:', node)
-}
+onMounted(async () => {
+  // Load settings first
+  await settingsStore.loadSettings()
+  console.log('[Dashboard] Settings loaded:', {
+    refreshInterval: settingsStore.refreshInterval,
+    enableAutoRefresh: settingsStore.enableAutoRefresh
+  })
+
+  // Initial fetch
+  await fetchStats()
+
+  // Setup auto-refresh
+  setupAutoRefresh()
+
+  // Watch for settings changes
+  watch(() => [settingsStore.refreshInterval, settingsStore.enableAutoRefresh], () => {
+    console.log('[Dashboard] Settings changed, updating refresh interval')
+    setupAutoRefresh()
+  })
+})
+
+onUnmounted(() => {
+  if (refreshInterval) {
+    clearInterval(refreshInterval)
+  }
+})
 </script>
 
-<style>
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
-
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-}
-
-body {
-  margin: 0;
-  padding: 0;
-  overflow-x: hidden;
-}
-
-/* Custom Scrollbar - Light Mode */
-::-webkit-scrollbar {
-  width: 10px;
-  height: 10px;
-}
-
-::-webkit-scrollbar-track {
-  background: transparent;
-  margin: 4px;
-}
-
-::-webkit-scrollbar-thumb {
-  background: rgba(0, 0, 0, 0.15);
-  border-radius: 10px;
-  border: 2px solid transparent;
-  background-clip: padding-box;
-}
-
-::-webkit-scrollbar-thumb:hover {
-  background: rgba(0, 0, 0, 0.25);
-  border: 2px solid transparent;
-  background-clip: padding-box;
-}
-
-/* Custom Scrollbar - Dark Mode */
-.dark ::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.15);
-  border-radius: 10px;
-  border: 2px solid transparent;
-  background-clip: padding-box;
-}
-
-.dark ::-webkit-scrollbar-thumb:hover {
-  background: rgba(255, 255, 255, 0.25);
-  border: 2px solid transparent;
-  background-clip: padding-box;
-}
-
-/* Firefox scrollbar */
-* {
-  scrollbar-width: thin;
-  scrollbar-color: rgba(0, 0, 0, 0.15) transparent;
-}
-
-.dark * {
-  scrollbar-color: rgba(255, 255, 255, 0.15) transparent;
-}
-</style>
-
 <style scoped>
-
-/* Theme Variables */
-.dashboard {
-  /* Reduced brightness light mode - easy on eyes */
-  --bg: #e8e7e3;
-  --surface: #f0efeb;
-  --border: #d4d3cf;
-  --text-primary: #1f1f1f;
-  --text-secondary: #5a5a5a;
-  --text-tertiary: #828282;
-  --accent: #3a4553;
-  --success: #0e9f6e;
-  --warning: #d97706;
-  --info: #2563eb;
-  --sidebar-width: 240px;
-  --sidebar-collapsed-width: 64px;
-
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
-  min-height: 100vh;
-  background: var(--bg);
-  color: var(--text-primary);
-  transition: all 0.2s ease;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  display: flex;
-}
-
-.dashboard.dark {
-  --bg: #0a0a0a;
-  --surface: #121212;
-  --border: #262626;
-  --text-primary: #fafafa;
-  --text-secondary: #a3a3a3;
-  --text-tertiary: #737373;
-  --accent: #ffffff;
-}
-
-/* Main Content */
-.main {
-  flex: 1;
-  margin-left: var(--sidebar-width);
-  padding: 3rem 0;
-  transition: margin-left 0.3s ease;
-  overflow-x: hidden;
-  overflow-y: auto;
-  height: 100vh;
-}
-
-.sidebar-collapsed .main {
-  margin-left: var(--sidebar-collapsed-width);
-}
-
-.main-container {
-  max-width: 1280px;
+.dashboard-page {
+  padding: 2rem;
+  max-width: 1400px;
   margin: 0 auto;
-  padding: 0 2rem;
-  overflow-x: hidden;
 }
 
-/* Stats Grid */
-.stats {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-  gap: 1rem;
+.page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
   margin-bottom: 2rem;
-}
-
-/* Content Grid */
-.grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  flex-wrap: wrap;
   gap: 1rem;
-  margin-bottom: 2rem;
 }
 
-/* Full Width Section */
-.full-width-section {
-  width: 100%;
-  margin-top: 2rem;
-  animation: fadeInUp 0.5s ease;
+.header-content h1 {
+  font-size: 1.875rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin: 0 0 0.5rem 0;
 }
 
-@keyframes fadeInUp {
+.header-content p {
+  font-size: 0.938rem;
+  color: var(--text-secondary);
+  margin: 0;
+}
+
+.header-actions {
+  display: flex;
+  gap: 0.75rem;
+}
+
+.refresh-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.625rem 1rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  color: var(--text-primary);
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.refresh-btn:hover:not(:disabled) {
+  background: var(--bg);
+  border-color: var(--accent);
+}
+
+.refresh-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.refresh-btn svg.spinning {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
   from {
-    opacity: 0;
-    transform: translateY(20px);
+    transform: rotate(0deg);
   }
   to {
-    opacity: 1;
-    transform: translateY(0);
+    transform: rotate(360deg);
   }
 }
 
-/* Responsive */
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.content-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1.5rem;
+}
+
+.grid-section.full-width {
+  grid-column: 1 / -1;
+}
+
 @media (max-width: 768px) {
-  .main {
-    margin-left: 0;
-    padding: 2rem 0;
-    height: auto;
-    min-height: 100vh;
+  .dashboard-page {
+    padding: 1rem;
   }
 
-  .sidebar-collapsed .main {
-    margin-left: 0;
+  .page-header {
+    flex-direction: column;
+    align-items: stretch;
   }
 
-  .main-container {
-    padding: 0 1rem;
-    max-width: 100%;
+  .header-actions {
+    width: 100%;
   }
 
-  .stats {
+  .refresh-btn {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .stats-grid {
     grid-template-columns: 1fr;
   }
 
-  .grid {
+  .content-grid {
     grid-template-columns: 1fr;
   }
 }
-
 </style>

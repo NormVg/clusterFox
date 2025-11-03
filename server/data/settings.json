@@ -1,0 +1,14 @@
+{
+  "dataRetention": 10000,
+  "refreshInterval": 5,
+  "sessionTimeout": 24,
+  "inactiveThreshold": 5,
+  "enableNotifications": true,
+  "enableAutoRefresh": true,
+  "theme": "dark",
+  "sidebarCollapsed": false,
+  "moduleActiveThreshold": 30,
+  "moduleInactiveThreshold": 60,
+  "enableEmergencyTriggers": true,
+  "enableAudioAlerts": true
+}

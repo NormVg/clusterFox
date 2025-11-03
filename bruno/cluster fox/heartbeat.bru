@@ -1,0 +1,39 @@
+meta {
+  name: heartbeat
+  type: http
+  seq: 5
+}
+
+post {
+  url: http://localhost:3000/api/heartbeat
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "umid": "CUTOFF-1234"
+  }
+}
+
+docs {
+  # Heartbeat Endpoint
+
+  Send a heartbeat to update module's lastSeen timestamp and keep it online/active.
+
+  ## Purpose
+  - Keeps cutoff modules (and any module) from going offline
+  - Updates lastSeen timestamp to current time
+  - Should be called regularly (every 2-5 seconds recommended)
+
+  ## Request Body
+  - `umid` (required): Unique Module ID
+  - `sessionId` (optional): Session ID (can be used instead of umid)
+
+  ## Response
+  - Returns success status and updated lastSeen timestamp
+
+  ## Usage in Simulators
+  Cutoff modules should call this endpoint periodically to maintain online status,
+  since they don't send continuous data like sensor modules.
+}

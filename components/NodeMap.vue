@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 
 const props = defineProps({
   initialNodes: {
@@ -15,40 +15,82 @@ const mapContainer = ref(null)
 const mapWrapper = ref(null)
 
 // Node management
-const nodes = ref([
-  {
-    id: 1,
-    name: 'Node 1',
-    x: 100,
-    y: 100,
-    status: 'online',
-    type: 'server'
-  },
-  {
-    id: 2,
-    name: 'Node 2',
-    x: 300,
-    y: 150,
-    status: 'offline',
-    type: 'database'
-  },
-  {
-    id: 3,
-    name: 'Node 3',
-    x: 500,
-    y: 200,
-    status: 'warning',
-    type: 'server'
-  },
-  {
-    id: 4,
-    name: 'Node 4',
-    x: 250,
-    y: 300,
-    status: 'online',
-    type: 'client'
+const nodes = ref([])
+
+// Load saved positions from API
+const loadSavedPositions = async () => {
+  try {
+    const response = await fetch('/api/node-positions')
+    const data = await response.json()
+    return data.success ? data.positions : {}
+  } catch (error) {
+    console.error('Error loading positions from API:', error)
+    return {}
   }
-])
+}
+
+// Save positions to API
+const savePositions = async () => {
+  try {
+    const positions = {}
+    nodes.value.forEach(node => {
+      positions[node.id] = { x: node.x, y: node.y }
+    })
+
+    // Save to API
+    await fetch('/api/node-positions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(positions)
+    })
+  } catch (error) {
+    console.error('Error saving positions:', error)
+  }
+}
+
+// Fetch modules from API
+const fetchModules = async () => {
+  try {
+    const response = await fetch(`/api/modules?_t=${Date.now()}`, {
+      headers: {
+        'Cache-Control': 'no-cache, no-store, must-revalidate'
+      }
+    })
+    const data = await response.json()
+
+    if (data.success && data.modules) {
+      const savedPositions = await loadSavedPositions()
+
+
+  // Rebuild/validate connections after nodes update
+  generateConnections()
+  console.log('[NodeMap] Nodes loaded:', nodes.value.length, 'Connections:', nodeConnections.value.length)
+      // Convert modules to nodes with saved or default positions
+      nodes.value = data.modules.map((module, index) => {
+        const saved = savedPositions[module.umid]
+        return {
+          id: module.umid,
+          name: module.umid,
+          x: saved?.x ?? (100 + (index % 4) * 200),
+          y: saved?.y ?? (100 + Math.floor(index / 4) * 200),
+          status: module.status,
+          type: module.moduleType,
+          moduleData: module
+        }
+      })
+
+      // Generate connections between nodes
+      generateConnections()
+    }
+  } catch (error) {
+    console.error('Error fetching modules:', error)
+  }
+}
+
+// Auto-refresh modules every 5 seconds
+let refreshInterval = null
 
 // State management
 const selectedNode = ref(null)
@@ -67,19 +109,110 @@ const newNodeForm = ref({
 })
 
 // Node status options
-const statusOptions = ['online', 'offline', 'warning', 'error', 'idle']
+const statusOptions = ['online', 'offline', 'warning', 'error', 'emergency', 'idle']
 const typeOptions = ['server', 'database', 'client', 'router', 'storage']
 
 // Status colors
 const getStatusColor = (status) => {
   const colors = {
+    active: '#10b981',      // Green for active
+    inactive: '#f59e0b',    // Orange for inactive
+    offline: '#6b7280',     // Gray for offline
+    unknown: '#6b7280',     // Gray for unknown
     online: '#10b981',
-    offline: '#ef4444',
     warning: '#f59e0b',
-    error: '#dc2626',
+    error: '#6b7280',
+    emergency: '#dc2626',   // Red for emergency
     idle: '#6b7280'
   }
   return colors[status] || '#6b7280'
+}
+
+// Node connections - define which nodes connect to which
+const nodeConnections = ref([])
+
+// View mode - 'view' or 'connect'
+const viewMode = ref('view')
+
+// Connection mode - always custom now
+const connectionMode = ref('custom')
+
+// Custom connection dropdowns
+const connectionFrom = ref('')
+const connectionTo = ref('')
+
+// Add connection from dropdowns
+const addConnection = () => {
+  if (!connectionFrom.value || !connectionTo.value || connectionFrom.value === connectionTo.value) {
+    return
+  }
+
+  // Check if connection already exists
+  const exists = nodeConnections.value.some(
+    c => (c.from === connectionFrom.value && c.to === connectionTo.value) ||
+         (c.from === connectionTo.value && c.to === connectionFrom.value)
+  )
+
+  if (!exists) {
+    console.log('[Connection] Adding:', connectionFrom.value, '→', connectionTo.value)
+    nodeConnections.value.push({
+      from: connectionFrom.value,
+      to: connectionTo.value
+    })
+    saveConnections()
+  }
+
+  // Reset dropdowns
+  connectionFrom.value = ''
+  connectionTo.value = ''
+}
+
+
+
+// Delete a connection
+const deleteConnection = (fromId, toId) => {
+  const index = nodeConnections.value.findIndex(
+    c => (c.from === fromId && c.to === toId) || (c.from === toId && c.to === fromId)
+  )
+  if (index !== -1) {
+    nodeConnections.value.splice(index, 1)
+    saveConnections()
+  }
+}
+
+// Save custom connections
+const saveConnections = async () => {
+  try {
+    const connections = { connections: nodeConnections.value }
+    await fetch('/api/node-connections', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(connections)
+    })
+  } catch (error) {
+    console.error('Error saving connections:', error)
+  }
+}
+
+// Load custom connections
+const loadConnections = async () => {
+  try {
+    const response = await fetch('/api/node-connections')
+    const data = await response.json()
+    if (data.success && data.connections) {
+      return data.connections
+    }
+  } catch (error) {
+    console.error('Error loading connections:', error)
+  }
+  return []
+}
+
+// Auto-generate connections based on topology mode
+// Load saved custom connections
+const generateConnections = async () => {
+  const saved = await loadConnections()
+  nodeConnections.value = saved
 }
 
 // Type icons (using text for simplicity)
@@ -123,8 +256,8 @@ const handleMouseMove = (event) => {
     const newX = (event.clientX - rect.left - mapOffset.value.x) / mapScale.value - dragStart.value.x
     const newY = (event.clientY - rect.top - mapOffset.value.y) / mapScale.value - dragStart.value.y
 
-    draggingNode.value.x = Math.max(0, Math.min(2000, newX))
-    draggingNode.value.y = Math.max(0, Math.min(2000, newY))
+    draggingNode.value.x = Math.max(0, Math.min(5000, newX))
+    draggingNode.value.y = Math.max(0, Math.min(5000, newY))
 
     emit('nodeUpdated', draggingNode.value)
   } else if (isDraggingMap.value) {
@@ -137,6 +270,13 @@ const handleMouseMove = (event) => {
 
 // Mouse up handler
 const handleMouseUp = () => {
+  if (draggingNode.value) {
+    // Save positions when done dragging
+    savePositions()
+  // Connections depend on node positions; recompute lines
+  // (connectionLines is computed, but ensure any dependent visuals refresh)
+  // No-op; Vue reactivity will update since nodes changed.
+  }
   draggingNode.value = null
   isDraggingMap.value = false
 }
@@ -188,6 +328,45 @@ const deleteNode = (nodeId) => {
   }
 }
 
+// Format date helper
+const formatDate = (dateString) => {
+  if (!dateString) return 'N/A'
+  try {
+    const date = new Date(dateString)
+    return date.toLocaleString('en-US', {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    })
+  } catch (error) {
+    return 'Invalid date'
+  }
+}
+
+// Format last seen helper
+const formatLastSeen = (dateString) => {
+  if (!dateString) return 'N/A'
+  try {
+    const now = Date.now()
+    const lastSeen = new Date(dateString).getTime()
+    const diff = now - lastSeen
+    const minutes = Math.floor(diff / 60000)
+
+    if (minutes < 1) return 'Just now'
+    if (minutes < 60) return `${minutes}m ago`
+
+    const hours = Math.floor(minutes / 60)
+    if (hours < 24) return `${hours}h ago`
+
+    const days = Math.floor(hours / 24)
+    return `${days}d ago`
+  } catch (error) {
+    return 'Invalid date'
+  }
+}
+
 // Update node status
 const updateNodeStatus = (nodeId, newStatus) => {
   const node = nodes.value.find(n => n.id === nodeId)
@@ -222,11 +401,22 @@ const handleWheel = (event) => {
 onMounted(() => {
   window.addEventListener('mousemove', handleMouseMove)
   window.addEventListener('mouseup', handleMouseUp)
+
+  // Initial fetch
+  fetchModules()
+
+  // Auto-refresh every 5 seconds
+  refreshInterval = setInterval(fetchModules, 5000)
 })
 
 onUnmounted(() => {
   window.removeEventListener('mousemove', handleMouseMove)
   window.removeEventListener('mouseup', handleMouseUp)
+
+  // Clear refresh interval
+  if (refreshInterval) {
+    clearInterval(refreshInterval)
+  }
 })
 
 // Computed
@@ -246,10 +436,11 @@ const statusCounts = computed(() => {
       <div class="header-left">
         <h3>Node Map</h3>
         <div class="node-stats">
-          <span class="stat">{{ nodeCount }} nodes</span>
+          <span class="stat">{{ nodeCount }} module{{ nodeCount !== 1 ? 's' : '' }}</span>
           <span
             v-for="status in statusOptions"
             :key="status"
+            v-show="statusCounts[status] > 0"
             class="stat-badge"
             :style="{ borderColor: getStatusColor(status) }"
           >
@@ -260,12 +451,75 @@ const statusCounts = computed(() => {
       </div>
 
       <div class="header-right">
-        <button class="control-btn" @click="showAddNodeForm = !showAddNodeForm">
-          <span>+</span> Add Node
+                <button
+          class="control-btn mode-btn"
+          :class="{ active: viewMode === 'connect' }"
+          @click="viewMode = viewMode === 'view' ? 'connect' : 'view'"
+          title="Toggle connection mode"
+        >
+          <svg v-if="viewMode === 'view'" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" />
+            <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" />
+          </svg>
+          <svg v-else width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+            <circle cx="12" cy="12" r="3" />
+          </svg>
+          {{ viewMode === 'view' ? 'Connect Mode' : 'View Mode' }}
+        </button>
+        <button class="control-btn" @click="fetchModules" title="Refresh modules">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="23 4 23 10 17 10" />
+            <polyline points="1 20 1 14 7 14" />
+            <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15" />
+          </svg>
+          Refresh
         </button>
         <button class="control-btn" @click="zoomOut">−</button>
         <button class="control-btn" @click="resetZoom">⟲</button>
         <button class="control-btn" @click="zoomIn">+</button>
+      </div>
+    </div>
+
+    <!-- Connection Creator -->
+    <div v-if="viewMode === 'connect'" class="connection-creator">
+      <div class="creator-content">
+        <span class="creator-label">Create Connection:</span>
+        <select v-model="connectionFrom" class="node-select">
+          <option value="">From Node...</option>
+          <option v-for="node in nodes" :key="node.id" :value="node.id">
+            {{ node.name }}
+          </option>
+        </select>
+        <span class="arrow">→</span>
+        <select v-model="connectionTo" class="node-select">
+          <option value="">To Node...</option>
+          <option v-for="node in nodes" :key="node.id" :value="node.id" :disabled="node.id === connectionFrom">
+            {{ node.name }}
+          </option>
+        </select>
+                <button
+          class="control-btn add-btn"
+          @click="addConnection"
+          :disabled="!connectionFrom || !connectionTo || connectionFrom === connectionTo"
+        >
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="12" y1="5" x2="12" y2="19" />
+            <line x1="5" y1="12" x2="19" y2="12" />
+          </svg>
+          Add
+        </button>
+        <button
+          class="control-btn clear-btn"
+          @click="nodeConnections = []; saveConnections()"
+          :disabled="nodeConnections.length === 0"
+        >
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="3 6 5 6 21 6" />
+            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+          </svg>
+          Clear All ({{ nodeConnections.length }})
+        </button>
       </div>
     </div>
 
@@ -309,6 +563,28 @@ const statusCounts = computed(() => {
         <!-- Grid Background -->
         <div class="map-grid"></div>
 
+        <!-- Connection Lines (SVG) -->
+        <svg class="connection-layer" width="5000" height="5000">
+          <!-- Connections -->
+          <g v-for="(conn, index) in nodeConnections" :key="`conn-${index}`">
+            <line
+              v-if="nodes.find(n => n.id === conn.from) && nodes.find(n => n.id === conn.to)"
+              :x1="nodes.find(n => n.id === conn.from).x + 12"
+              :y1="nodes.find(n => n.id === conn.from).y + 12"
+              :x2="nodes.find(n => n.id === conn.to).x + 12"
+              :y2="nodes.find(n => n.id === conn.to).y + 12"
+              stroke="#94a3b8"
+              stroke-width="2"
+              stroke-dasharray="5,5"
+              stroke-linecap="round"
+              opacity="0.6"
+              class="connection-line"
+              :title="`${conn.from} → ${conn.to}`"
+              @click.stop="viewMode === 'connect' ? deleteConnection(conn.from, conn.to) : null"
+            />
+          </g>
+        </svg>
+
         <!-- Nodes -->
         <div
           v-for="node in nodes"
@@ -317,6 +593,7 @@ const statusCounts = computed(() => {
           :class="{
             'node-selected': selectedNode?.id === node.id,
             'node-dragging': draggingNode?.id === node.id,
+            'node-cutoff': node.moduleData?.isCutoffModule,
             [`node-${node.status}`]: true
           }"
           :style="{
@@ -327,7 +604,11 @@ const statusCounts = computed(() => {
           @click="selectNode(node, $event)"
         >
           <!-- Node Core -->
-          <div class="node-core" :style="{ borderColor: getStatusColor(node.status) }">
+          <div
+            class="node-core"
+            :class="{ 'node-core-cutoff': node.moduleData?.isCutoffModule }"
+            :style="{ borderColor: getStatusColor(node.status) }"
+          >
             <div class="node-pulse" :style="{ borderColor: getStatusColor(node.status) }"></div>
             <div class="node-dot" :style="{ background: getStatusColor(node.status) }"></div>
           </div>
@@ -356,53 +637,80 @@ const statusCounts = computed(() => {
 
       <div class="details-content">
         <div class="detail-row">
+          <span class="detail-label">Module ID:</span>
+          <span class="detail-value module-id">{{ selectedNode.moduleData?.umid || selectedNode.id }}</span>
+        </div>
+
+        <div class="detail-row">
           <span class="detail-label">Type:</span>
-          <span class="detail-value">{{ getTypeIcon(selectedNode.type) }} {{ selectedNode.type }}</span>
+          <span class="detail-value">{{ selectedNode.moduleData?.moduleType || selectedNode.type }}</span>
         </div>
 
         <div class="detail-row">
           <span class="detail-label">Status:</span>
-          <select
-            :value="selectedNode.status"
-            @change="updateNodeStatus(selectedNode.id, $event.target.value)"
-            class="status-select"
-          >
-            <option v-for="status in statusOptions" :key="status" :value="status">
-              {{ status }}
-            </option>
-          </select>
+          <span class="detail-value">
+            <span class="status-badge" :style="{
+              background: getStatusColor(selectedNode.status) + '20',
+              color: getStatusColor(selectedNode.status),
+              border: '1px solid ' + getStatusColor(selectedNode.status)
+            }">
+              {{ selectedNode.status }}
+            </span>
+          </span>
+        </div>
+
+        <div class="detail-row">
+          <span class="detail-label">Last Seen:</span>
+          <span class="detail-value">{{ formatLastSeen(selectedNode.moduleData?.lastSeen) }}</span>
+        </div>
+
+        <div class="detail-row">
+          <span class="detail-label">Data Count:</span>
+          <span class="detail-value">{{ selectedNode.moduleData?.dataCount || 0 }} readings</span>
+        </div>
+
+        <div class="detail-row">
+          <span class="detail-label">Registered:</span>
+          <span class="detail-value">{{ formatDate(selectedNode.moduleData?.registeredAt) }}</span>
+        </div>
+
+        <div class="detail-row">
+          <span class="detail-label">Session ID:</span>
+          <span class="detail-value session-id">{{ selectedNode.moduleData?.session_id?.substring(0, 12) }}...</span>
         </div>
 
         <div class="detail-row">
           <span class="detail-label">Position:</span>
           <span class="detail-value">X: {{ Math.round(selectedNode.x) }}, Y: {{ Math.round(selectedNode.y) }}</span>
         </div>
-
-        <div class="detail-row">
-          <span class="detail-label">ID:</span>
-          <span class="detail-value">{{ selectedNode.id }}</span>
-        </div>
-      </div>
-
-      <div class="details-actions">
-        <button class="delete-btn" @click="deleteNode(selectedNode.id)">
-          Delete Node
-        </button>
       </div>
     </div>
 
     <!-- Instructions -->
     <div class="map-instructions">
-      <p>💡 <strong>Drag</strong> nodes to move • <strong>Click</strong> background to pan • <strong>Scroll</strong> to zoom</p>
+      <p v-if="viewMode === 'connect'">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display: inline-block; vertical-align: middle; margin-right: 4px;">
+          <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" />
+          <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" />
+        </svg>
+        <strong>Connect Mode:</strong> Select nodes from dropdowns above to create connections • <strong>Click</strong> line to delete • <strong>Drag</strong> nodes to move
+      </p>
+      <p v-else>
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display: inline-block; vertical-align: middle; margin-right: 4px;">
+          <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+          <circle cx="12" cy="12" r="3" />
+        </svg>
+        <strong>View Mode:</strong> <strong>Drag</strong> nodes to move • <strong>Scroll</strong> to zoom • <strong>Click</strong> node for details
+      </p>
     </div>
   </div>
 </template>
 
 <style scoped>
+/* Container - Fixed to parent size */
 .node-map-container {
   width: 100%;
-  height: 600px;
-  max-height: 600px;
+  height: 100%;
   background: var(--surface);
   border-radius: 12px;
   border: 1px solid var(--border);
@@ -410,18 +718,19 @@ const statusCounts = computed(() => {
   display: flex;
   flex-direction: column;
   position: relative;
-  animation: fadeInUp 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  box-sizing: border-box;
 }
 
-/* Header */
+/* Header - Fixed height */
 .map-header {
-  padding: 20px;
+  padding: 16px 20px;
   border-bottom: 1px solid var(--border);
   display: flex;
   justify-content: space-between;
   align-items: center;
   background: var(--surface);
-  z-index: 10;
+  flex-shrink: 0;
+  min-height: 70px;
   flex-wrap: wrap;
   gap: 12px;
 }
@@ -444,12 +753,15 @@ const statusCounts = computed(() => {
   display: flex;
   gap: 12px;
   flex-wrap: wrap;
+  align-items: center;
 }
 
 .stat {
   font-size: 13px;
   color: var(--text-secondary);
   font-weight: 500;
+  display: flex;
+  align-items: center;
 }
 
 .stat-badge {
@@ -476,6 +788,29 @@ const statusCounts = computed(() => {
   gap: 8px;
 }
 
+.topology-select {
+  padding: 8px 12px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  color: var(--text-primary);
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-family: inherit;
+  font-weight: 500;
+}
+
+.topology-select:hover {
+  border-color: var(--accent);
+}
+
+.topology-select:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
 .control-btn {
   padding: 8px 16px;
   border: 1px solid var(--border);
@@ -497,7 +832,101 @@ const statusCounts = computed(() => {
   transform: translateY(-1px);
 }
 
-/* Add Node Form */
+.mode-btn.active {
+  background: #e5e7eb !important;
+  color: #374151 !important;
+  border-color: #d1d5db !important;
+}
+
+.mode-btn.active:hover {
+  background: #d1d5db !important;
+  color: #374151 !important;
+  opacity: 1;
+}
+
+.clear-btn {
+  border-color: #ef4444;
+  color: #ef4444;
+}
+
+.clear-btn:hover {
+  background: rgba(239, 68, 68, 0.1);
+  border-color: #dc2626;
+}
+
+.clear-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.add-btn {
+  border-color: #10b981;
+  color: #10b981;
+}
+
+.add-btn:hover:not(:disabled) {
+  background: rgba(16, 185, 129, 0.1);
+  border-color: #059669;
+}
+
+.add-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Connection Creator Panel */
+.connection-creator {
+  padding: 12px 20px;
+  border-bottom: 1px solid var(--border);
+  background: var(--surface);
+  flex-shrink: 0;
+}
+
+.creator-content {
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.creator-label {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.node-select {
+  padding: 8px 12px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--bg);
+  color: var(--text-primary);
+  font-size: 14px;
+  font-family: inherit;
+  min-width: 140px;
+  max-width: 180px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.node-select:hover {
+  border-color: var(--accent);
+}
+
+.node-select:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.arrow {
+  font-size: 18px;
+  color: var(--text-secondary);
+  font-weight: bold;
+}
+
+/* Add Node Form - Fixed height when visible */
 .add-node-form {
   padding: 16px 20px;
   border-bottom: 1px solid var(--border);
@@ -505,7 +934,7 @@ const statusCounts = computed(() => {
   display: flex;
   gap: 10px;
   flex-wrap: wrap;
-  animation: slideDown 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  flex-shrink: 0;
 }
 
 .add-node-form input,
@@ -529,7 +958,7 @@ const statusCounts = computed(() => {
   border: 1px solid var(--border);
   border-radius: 6px;
   background: var(--accent);
-  color: var(--surface);
+  color: var(--bg);
   font-size: 14px;
   font-weight: 500;
   cursor: pointer;
@@ -546,9 +975,10 @@ const statusCounts = computed(() => {
   color: var(--text-secondary);
 }
 
-/* Map Viewport */
+/* Map Viewport - Fills remaining space */
 .map-viewport {
   flex: 1;
+  min-height: 0;
   position: relative;
   overflow: hidden;
   background: var(--bg);
@@ -559,21 +989,56 @@ const statusCounts = computed(() => {
   cursor: grabbing;
 }
 
+/* Map Wrapper - Large virtual canvas */
 .map-wrapper {
-  width: 3000px;
-  height: 3000px;
-  position: relative;
+  width: 5000px;
+  height: 5000px;
+  position: absolute;
+  top: 0;
+  left: 0;
   transition: transform 0.05s linear;
+  will-change: transform;
 }
 
 /* Grid Background */
 .map-grid {
   position: absolute;
-  inset: 0;
+  width: 100%;
+  height: 100%;
+  top: 0;
+  left: 0;
+  background-color: var(--bg);
   background-image:
-    repeating-linear-gradient(0deg, var(--border) 0px, var(--border) 1px, transparent 1px, transparent 50px),
-    repeating-linear-gradient(90deg, var(--border) 0px, var(--border) 1px, transparent 1px, transparent 50px);
-  opacity: 0.3;
+    repeating-linear-gradient(0deg, rgba(255, 255, 255, 0.05) 0px, rgba(255, 255, 255, 0.05) 1px, transparent 1px, transparent 50px),
+    repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.05) 0px, rgba(255, 255, 255, 0.05) 1px, transparent 1px, transparent 50px);
+  background-size: 50px 50px;
+  pointer-events: none;
+}
+
+/* Connection Layer */
+.connection-layer {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  top: 0;
+  left: 0;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.connection-layer line {
+  transition: opacity 0.3s ease, stroke 0.3s ease;
+}
+
+.connection-line {
+  cursor: pointer;
+  pointer-events: stroke;
+}
+
+.connection-line:hover {
+  opacity: 0.8 !important;
+  stroke: #ef4444 !important;
+  stroke-width: 3;
 }
 
 /* Node Styles */
@@ -582,21 +1047,40 @@ const statusCounts = computed(() => {
   cursor: move;
   user-select: none;
   transition: transform 0.1s ease;
-  z-index: 1;
+  z-index: 10;
 }
 
 .node:hover {
-  z-index: 2;
+  z-index: 20;
   transform: scale(1.05);
 }
 
 .node-selected {
-  z-index: 3;
+  z-index: 30;
 }
 
 .node-dragging {
-  z-index: 4;
+  z-index: 40;
   cursor: grabbing;
+}
+
+.node-connecting {
+  z-index: 50;
+}
+
+.node-connecting .node-core {
+  border-color: #3b82f6 !important;
+  box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.3);
+  animation: pulse-connect 1s ease infinite;
+}
+
+@keyframes pulse-connect {
+  0%, 100% {
+    box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.3);
+  }
+  50% {
+    box-shadow: 0 0 0 8px rgba(59, 130, 246, 0.1);
+  }
 }
 
 .node-core {
@@ -608,6 +1092,28 @@ const statusCounts = computed(() => {
   background: var(--surface);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
   transition: all 0.3s ease;
+}
+
+/* Diamond/Rhombus shape for cutoff modules */
+.node-core-cutoff {
+  border-radius: 0;
+  transform: rotate(45deg);
+  width: 28px;
+  height: 28px;
+}
+
+.node-cutoff:hover .node-core-cutoff {
+  transform: rotate(45deg) scale(1.2);
+}
+
+.node-core-cutoff .node-pulse {
+  border-radius: 0;
+}
+
+.node-core-cutoff .node-dot {
+  border-radius: 0;
+  transform: rotate(-45deg);
+  inset: 6px;
 }
 
 .node:hover .node-core {
@@ -789,6 +1295,28 @@ const statusCounts = computed(() => {
   font-weight: 600;
 }
 
+.detail-value.module-id {
+  font-family: 'SF Mono', 'Monaco', 'Courier New', monospace;
+  font-size: 0.813rem;
+  color: var(--accent);
+}
+
+.detail-value.session-id {
+  font-family: 'SF Mono', 'Monaco', 'Courier New', monospace;
+  font-size: 0.75rem;
+  color: var(--text-tertiary);
+}
+
+.status-badge {
+  display: inline-block;
+  padding: 0.25rem 0.625rem;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
 .status-select {
   padding: 4px 8px;
   border: 1px solid var(--border);
@@ -938,5 +1466,25 @@ const statusCounts = computed(() => {
   .add-node-form input {
     width: 100%;
   }
+}
+
+/* Emergency Pulse Animation */
+@keyframes emergencyPulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.6;
+  }
+}
+
+.node.status-emergency circle {
+  stroke: #dc2626 !important;
+  animation: emergencyPulse 1.5s ease-in-out infinite;
+}
+
+.connection.status-emergency {
+  stroke: #dc2626 !important;
+  animation: emergencyPulse 1.5s ease-in-out infinite;
 }
 </style>

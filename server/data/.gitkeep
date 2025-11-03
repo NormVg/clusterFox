@@ -1,0 +1,4 @@
+# This directory stores the JSON database files
+# Files in this directory:
+# - modules.json: Registered IoT modules
+# - sensor-data.json: Sensor data from modules

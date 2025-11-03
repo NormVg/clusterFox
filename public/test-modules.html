@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Module Status Test</title>
+    <style>
+        body {
+            font-family: monospace;
+            padding: 20px;
+            background: #1a1a1a;
+            color: #fff;
+        }
+        .module {
+            background: #2a2a2a;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 8px;
+            border-left: 4px solid #666;
+        }
+        .module.active { border-left-color: #22c55e; }
+        .module.inactive { border-left-color: #eab308; }
+        .module.offline { border-left-color: #ef4444; }
+        .module.unknown { border-left-color: #6b7280; }
+        .status {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+        .status.active { background: #22c55e; color: #000; }
+        .status.inactive { background: #eab308; color: #000; }
+        .status.offline { background: #ef4444; color: #fff; }
+        .status.unknown { background: #6b7280; color: #fff; }
+        button {
+            background: #3b82f6;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            margin: 10px 5px 10px 0;
+        }
+        button:hover {
+            background: #2563eb;
+        }
+        .info {
+            background: #1e3a8a;
+            padding: 10px;
+            border-radius: 6px;
+            margin: 10px 0;
+        }
+        .error {
+            background: #7f1d1d;
+            padding: 10px;
+            border-radius: 6px;
+            margin: 10px 0;
+        }
+    </style>
+</head>
+<body>
+    <h1>🔍 Module Status Test Page</h1>
+    <p>Direct API testing - bypasses Vue component</p>
+
+    <div class="info">
+        <strong>Settings:</strong> <span id="settings">Loading...</span><br>
+        <strong>Last Updated:</strong> <span id="lastUpdate">Never</span><br>
+        <strong>Auto-refresh:</strong> <span id="autoRefresh">ON (every 5s)</span>
+    </div>
+
+    <button onclick="fetchModules()">🔄 Refresh Now</button>
+    <button onclick="toggleAutoRefresh()">⏸️ Toggle Auto-Refresh</button>
+    <button onclick="clearModules()">🗑️ Clear</button>
+
+    <div id="error" class="error" style="display: none;"></div>
+    <div id="modules"></div>
+
+    <script>
+        let autoRefreshInterval = null;
+        let autoRefreshEnabled = true;
+
+        async function fetchSettings() {
+            try {
+                const response = await fetch('/api/settings');
+                const data = await response.json();
+                if (data.success) {
+                    const s = data.settings;
+                    document.getElementById('settings').textContent =
+                        `Active=${s.moduleActiveThreshold}s, Inactive=${s.moduleInactiveThreshold}s`;
+                }
+            } catch (error) {
+                console.error('Settings error:', error);
+            }
+        }
+
+        async function fetchModules() {
+            try {
+                const response = await fetch(`/api/modules?_t=${Date.now()}`, {
+                    cache: 'no-store',
+                    headers: { 'Cache-Control': 'no-cache' }
+                });
+                const data = await response.json();
+
+                document.getElementById('error').style.display = 'none';
+                document.getElementById('lastUpdate').textContent = new Date().toLocaleTimeString();
+
+                if (data.success && data.modules) {
+                    const container = document.getElementById('modules');
+                    container.innerHTML = '<h2>📡 Modules (' + data.modules.length + ')</h2>';
+
+                    data.modules.forEach(module => {
+                        const lastSeen = module.lastSeen ? new Date(module.lastSeen) : null;
+                        const secondsAgo = lastSeen ? Math.floor((Date.now() - lastSeen.getTime()) / 1000) : null;
+
+                        const div = document.createElement('div');
+                        div.className = `module ${module.status}`;
+                        div.innerHTML = `
+                            <strong>${module.umid}</strong>
+                            <span class="status ${module.status}">${module.status}</span>
+                            <br>
+                            <small>
+                                Type: ${module.moduleType} |
+                                Data Points: ${module.dataCount || 0} |
+                                Last Seen: ${lastSeen ? lastSeen.toLocaleString() : 'Never'}
+                                ${secondsAgo ? `(${secondsAgo}s ago)` : ''}
+                            </small>
+                        `;
+                        container.appendChild(div);
+                    });
+
+                    console.log('[Test Page] Fetched', data.modules.length, 'modules:', data.modules);
+                } else {
+                    showError('Failed to fetch modules');
+                }
+            } catch (error) {
+                showError('Error: ' + error.message);
+                console.error('Fetch error:', error);
+            }
+        }
+
+        function showError(message) {
+            const errorDiv = document.getElementById('error');
+            errorDiv.textContent = '❌ ' + message;
+            errorDiv.style.display = 'block';
+        }
+
+        function clearModules() {
+            document.getElementById('modules').innerHTML = '<h2>📡 Modules</h2><p>Cleared. Click Refresh to reload.</p>';
+        }
+
+        function toggleAutoRefresh() {
+            autoRefreshEnabled = !autoRefreshEnabled;
+            const span = document.getElementById('autoRefresh');
+
+            if (autoRefreshEnabled) {
+                span.textContent = 'ON (every 5s)';
+                startAutoRefresh();
+            } else {
+                span.textContent = 'OFF';
+                if (autoRefreshInterval) {
+                    clearInterval(autoRefreshInterval);
+                    autoRefreshInterval = null;
+                }
+            }
+        }
+
+        function startAutoRefresh() {
+            if (autoRefreshInterval) {
+                clearInterval(autoRefreshInterval);
+            }
+            autoRefreshInterval = setInterval(fetchModules, 5000);
+        }
+
+        // Initial load
+        fetchSettings();
+        fetchModules();
+        startAutoRefresh();
+    </script>
+</body>
+</html>

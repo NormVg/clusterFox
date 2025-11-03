@@ -1,0 +1,218 @@
+{
+  "modules": [
+    {
+      "session_id": "51c0a660a2858a7c44907e40bfd8ebba54c0fda49c98b2c96b245a80e809e207",
+      "umid": "umid-humidity-templature-sernsor-module-19191-222",
+      "moduleType": "humidity-tempature",
+      "typeComponents": [
+        "humi",
+        "temp"
+      ],
+      "registeredAt": "2025-11-01T13:44:14.040Z",
+      "lastSeen": "2025-11-02T16:55:15.624Z",
+      "status": "active",
+      "dataCount": 208,
+      "sessionCreatedAt": "2025-11-02T08:51:50.265Z",
+      "triggers": {
+        "humi": {
+          "enabled": true,
+          "threshold": 5000,
+          "condition": "above"
+        },
+        "temp": {
+          "enabled": true,
+          "threshold": 5000,
+          "condition": "above"
+        }
+      }
+    },
+    {
+      "session_id": "5732d3f3f67fed4628bedc92796e28b0dfae69b500a50b024940084bd5eb6723",
+      "umid": "temp-humi-sensor-001",
+      "moduleType": "temperature-humidity",
+      "typeComponents": [
+        "temperature",
+        "humidity"
+      ],
+      "registeredAt": "2025-11-01T19:32:08.730Z",
+      "lastSeen": "2025-11-02T15:39:56.978Z",
+      "status": "active",
+      "dataCount": 222,
+      "sessionCreatedAt": "2025-11-02T15:36:30.936Z",
+      "triggers": {
+        "temperature": {
+          "enabled": true,
+          "threshold": 0,
+          "condition": "above"
+        },
+        "humidity": {
+          "enabled": true,
+          "threshold": 0,
+          "condition": "above"
+        }
+      }
+    },
+    {
+      "session_id": "28d6e060c371ccee986a610332cc2ac210a972ad73de94834b263e6857937cef",
+      "umid": "weather-station-002",
+      "moduleType": "weather-station",
+      "typeComponents": [
+        "weather",
+        "station"
+      ],
+      "registeredAt": "2025-11-01T19:32:09.244Z",
+      "lastSeen": "2025-11-02T15:39:57.205Z",
+      "status": "active",
+      "dataCount": 219,
+      "sessionCreatedAt": "2025-11-02T15:36:31.451Z"
+    },
+    {
+      "session_id": "869947cc01e8ab431456e4ce6e654a057b2438c92af0499013f3cca106cf5850",
+      "umid": "air-quality-003",
+      "moduleType": "air-quality",
+      "typeComponents": [
+        "air",
+        "quality"
+      ],
+      "registeredAt": "2025-11-01T19:32:09.762Z",
+      "lastSeen": "2025-11-02T15:39:57.434Z",
+      "status": "active",
+      "dataCount": 219,
+      "sessionCreatedAt": "2025-11-02T15:36:31.969Z"
+    },
+    {
+      "session_id": "583548fd4389ace7b7eec980a65a285ad7d02ba23597812551457b5933f671aa",
+      "umid": "smart-garden-004",
+      "moduleType": "garden-sensor",
+      "typeComponents": [
+        "garden",
+        "sensor"
+      ],
+      "registeredAt": "2025-11-01T19:32:10.277Z",
+      "lastSeen": "2025-11-02T15:39:57.657Z",
+      "status": "active",
+      "dataCount": 218,
+      "sessionCreatedAt": "2025-11-02T15:36:32.487Z"
+    },
+    {
+      "session_id": "5f27049df4299ca1ad2df9a83df6228275c29971cddfe366a3dd5a14c04517b9",
+      "umid": "motion-sensor-005",
+      "moduleType": "motion-detector",
+      "typeComponents": [
+        "motion",
+        "detector"
+      ],
+      "registeredAt": "2025-11-01T19:32:10.794Z",
+      "lastSeen": "2025-11-02T15:52:34.003Z",
+      "status": "active",
+      "dataCount": 218,
+      "sessionCreatedAt": "2025-11-02T15:36:33.003Z"
+    },
+    {
+      "session_id": "1a02c3fbc790247156a236543aa9f2676957ef7a3eb924aa804a19caefa65048",
+      "umid": "power-monitor-006",
+      "moduleType": "power-meter",
+      "typeComponents": [
+        "power",
+        "meter"
+      ],
+      "registeredAt": "2025-11-01T19:32:11.307Z",
+      "lastSeen": "2025-11-02T15:52:34.246Z",
+      "status": "active",
+      "dataCount": 217,
+      "sessionCreatedAt": "2025-11-02T15:36:33.515Z"
+    },
+    {
+      "session_id": "768687164a0095c9299e6b5e2807d1783393eabab0ded68270cd8b16b4f2cf84",
+      "umid": "test-module-12345",
+      "moduleType": "temperature-sensor",
+      "typeComponents": [
+        "temperature",
+        "sensor"
+      ],
+      "registeredAt": "2025-11-02T09:07:44.024Z",
+      "lastSeen": "2025-11-02T09:07:44.024Z",
+      "status": "active",
+      "dataCount": 0,
+      "sessionCreatedAt": "2025-11-02T09:07:44.024Z"
+    },
+    {
+      "umid": "CUTOFF-2673",
+      "name": "Cutoff Relay",
+      "poolId": "POOL001",
+      "moduleType": "cutoff-relay",
+      "typeComponents": [
+        "cutoff",
+        "relay"
+      ],
+      "sensors": [],
+      "isCutoffModule": true,
+      "cutoffActive": false,
+      "sessionId": "9d1399908406361e3ecdb466f6611a3d0a42a02a8612c22fc0290fd1a19be3bf",
+      "registeredAt": "2025-11-02T17:20:08.565Z",
+      "lastSeen": "2025-11-02T17:20:08.565Z",
+      "status": "online",
+      "dataCount": 0,
+      "lastTriggeredAt": "2025-11-02T17:21:58.342Z",
+      "triggeredBy": "manual"
+    },
+    {
+      "umid": "CUTOFF-2718",
+      "name": "Cutoff Relay",
+      "poolId": "POOL001",
+      "moduleType": "cutoff-relay",
+      "typeComponents": [
+        "cutoff",
+        "relay"
+      ],
+      "sensors": [],
+      "isCutoffModule": true,
+      "cutoffActive": false,
+      "sessionId": "3265bffc87cf5674b29cb5ef60224b63c72a604ec07d4c91319f584594995aac",
+      "registeredAt": "2025-11-02T18:03:28.675Z",
+      "lastSeen": "2025-11-02T20:20:29.850Z",
+      "status": "online",
+      "dataCount": 0,
+      "lastTriggeredAt": "2025-11-02T20:20:29.850Z",
+      "triggeredBy": "manual"
+    },
+    {
+      "umid": "CUTOFF-6885",
+      "name": "Cutoff Relay",
+      "poolId": "POOL001",
+      "moduleType": "cutoff-relay",
+      "typeComponents": [
+        "cutoff",
+        "relay"
+      ],
+      "sensors": [],
+      "isCutoffModule": true,
+      "cutoffActive": false,
+      "sessionId": "d9ad24fa21a25d662ddff6b088b1afed810c644cc8db4be766289b9ed54b9ab8",
+      "registeredAt": "2025-11-02T18:06:11.310Z",
+      "lastSeen": "2025-11-02T20:20:20.542Z",
+      "status": "online",
+      "dataCount": 0,
+      "lastTriggeredAt": "2025-11-02T20:20:20.542Z",
+      "triggeredBy": "manual"
+    },
+    {
+      "umid": "CUTOFF-7526",
+      "name": "Cutoff Relay",
+      "poolId": "POOL001",
+      "moduleType": "cutoff-relay",
+      "typeComponents": [
+        "cutoff",
+        "relay"
+      ],
+      "sensors": [],
+      "isCutoffModule": true,
+      "cutoffActive": false,
+      "sessionId": "6e4d10e971fa52f8f825df1b50835bbc6a00726f6d5a3cef954d1d142335f00e",
+      "registeredAt": "2025-11-02T20:26:41.126Z",
+      "lastSeen": "2025-11-02T20:26:43.188Z",
+      "status": "online",
+      "dataCount": 0
+    }
+  ]
+}
