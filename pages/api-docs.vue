@@ -1,470 +1,390 @@
 <template>
   <NuxtLayout>
-    <div class="page-container">
+    <div class="api-docs-container">
       <div class="page-header">
         <h1>API Documentation</h1>
-        <p>Complete guide to ClusterFox API endpoints</p>
+        <p>Complete API reference with endpoints, status badges, and code examples</p>
       </div>
 
-    <div class="api-docs">
-      <div class="card">
-        <div class="card-header">
-          <h2>Quick Start</h2>
-          <span class="badge">v1.0</span>
-        </div>
-        <p>ClusterFox provides a RESTful API for managing IoT modules and collecting sensor data. All endpoints return JSON responses.</p>
-        <div class="code-block">
-          <div class="code-header">
-            <span>Base URL</span>
-            <button class="copy-btn" @click="copy('http://localhost:3000')">Copy</button>
-          </div>
-          <code>http://localhost:3000</code>
-        </div>
+      <div class="nav-tabs">
+        <button @click="activeTab = 'endpoints'" :class="{ active: activeTab === 'endpoints' }">
+          API Endpoints
+        </button>
+        <button @click="activeTab = 'status'" :class="{ active: activeTab === 'status' }">
+          Status Badges
+        </button>
+        <button @click="activeTab = 'examples'" :class="{ active: activeTab === 'examples' }">
+          Examples
+        </button>
       </div>
 
-      <div class="card">
-        <h2>Authentication</h2>
-        <p>Modules authenticate using session IDs obtained during registration. Include the session_id in query parameters for authenticated requests.</p>
-      </div>
-
-      <div class="endpoint-card">
-        <div class="endpoint-header">
-          <span class="method get">GET</span>
-          <h3>/api/register</h3>
-        </div>
-        <p class="endpoint-desc">Register a new module and receive a unique session ID for authentication.</p>
-
-        <div class="endpoint-section">
-          <h4>Parameters</h4>
-          <table class="param-table">
-            <thead>
-              <tr>
-                <th>Name</th>
-                <th>Type</th>
-                <th>Required</th>
-                <th>Description</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr>
-                <td><code>type</code></td>
-                <td>string</td>
-                <td>✅ Yes</td>
-                <td>Module type (e.g., "temperature-sensor")</td>
-              </tr>
-              <tr>
-                <td><code>umid</code></td>
-                <td>string</td>
-                <td>✅ Yes</td>
-                <td>Unique module identifier</td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-
-        <div class="endpoint-section">
-          <h4>Example Request</h4>
-          <div class="code-block">
-            <code>GET /api/register?type=temperature-sensor&umid=ESP32-001</code>
-          </div>
-        </div>
-
-        <div class="endpoint-section">
-          <h4>Example Response</h4>
-          <div class="code-block">
-            <pre>{{
-  registerExample
-}}</pre>
+      <!-- Endpoints Tab -->
+      <div v-if="activeTab === 'endpoints'" class="tab-content">
+        <div class="api-section" v-for="section in apiSections" :key="section.title">
+          <h2>{{ section.title }}</h2>
+          <div v-for="endpoint in section.endpoints" :key="endpoint.path" class="endpoint">
+            <div class="endpoint-header">
+              <span :class="'method ' + endpoint.method">{{ endpoint.method }}</span>
+              <span class="path">{{ endpoint.path }}</span>
+            </div>
+            <p>{{ endpoint.description }}</p>
           </div>
         </div>
       </div>
 
-      <div class="endpoint-card">
-        <div class="endpoint-header">
-          <span class="method get">GET</span>
-          <h3>/api/pool</h3>
-        </div>
-        <p class="endpoint-desc">Submit sensor data from a registered module.</p>
-
-        <div class="endpoint-section">
-          <h4>Parameters</h4>
-          <table class="param-table">
-            <thead>
-              <tr>
-                <th>Name</th>
-                <th>Type</th>
-                <th>Required</th>
-                <th>Description</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr>
-                <td><code>session_id</code></td>
-                <td>string</td>
-                <td>✅ Yes</td>
-                <td>Session ID from registration</td>
-              </tr>
-              <tr>
-                <td><code>*</code></td>
-                <td>any</td>
-                <td>✅ Yes</td>
-                <td>Additional sensor data parameters</td>
-              </tr>
-            </tbody>
-          </table>
+      <!-- Status Tab -->
+      <div v-if="activeTab === 'status'" class="tab-content">
+        <div class="status-section">
+          <h2>System Status</h2>
+          <div class="status-grid">
+            <div class="status-item">
+              <span class="badge healthy">● Healthy</span>
+              <p>All modules online (100%)</p>
+            </div>
+            <div class="status-item">
+              <span class="badge warning">● Degraded</span>
+              <p>Some modules offline (1-99%)</p>
+            </div>
+            <div class="status-item">
+              <span class="badge critical">● Critical</span>
+              <p>No modules online (0%)</p>
+            </div>
+          </div>
         </div>
 
-        <div class="endpoint-section">
-          <h4>Example Request</h4>
-          <div class="code-block">
-            <code>GET /api/pool?session_id=abc123...&temperature=25.5&humidity=60</code>
+        <div class="status-section">
+          <h2>Module Status</h2>
+          <div class="status-grid">
+            <div class="status-item">
+              <span class="badge healthy">● Online</span>
+              <p>Last seen < 30s</p>
+            </div>
+            <div class="status-item">
+              <span class="badge warning">● Inactive</span>
+              <p>Last seen 30-60s</p>
+            </div>
+            <div class="status-item">
+              <span class="badge critical">● Offline</span>
+              <p>Last seen > 60s</p>
+            </div>
           </div>
         </div>
       </div>
 
-      <div class="endpoint-card">
-        <div class="endpoint-header">
-          <span class="method get">GET</span>
-          <h3>/api/modules</h3>
+      <!-- Examples Tab -->
+      <div v-if="activeTab === 'examples'" class="tab-content">
+        <div class="example-section">
+          <h2>Arduino/ESP32</h2>
+          <pre><code>{{ arduinoExample }}</code></pre>
         </div>
-        <p class="endpoint-desc">Retrieve list of registered modules.</p>
-
-        <div class="endpoint-section">
-          <h4>Example Response</h4>
-          <div class="code-block">
-            <pre>{{
-  modulesExample
-}}</pre>
-          </div>
+        <div class="example-section">
+          <h2>JavaScript</h2>
+          <pre><code>{{ jsExample }}</code></pre>
         </div>
       </div>
-
-      <div class="endpoint-card">
-        <div class="endpoint-header">
-          <span class="method get">GET</span>
-          <h3>/api/sensor-data</h3>
-        </div>
-        <p class="endpoint-desc">Retrieve sensor data readings.</p>
-
-        <div class="endpoint-section">
-          <h4>Parameters</h4>
-          <table class="param-table">
-            <thead>
-              <tr>
-                <th>Name</th>
-                <th>Type</th>
-                <th>Required</th>
-                <th>Description</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr>
-                <td><code>session_id</code></td>
-                <td>string</td>
-                <td>No</td>
-                <td>Filter by module session ID</td>
-              </tr>
-              <tr>
-                <td><code>limit</code></td>
-                <td>number</td>
-                <td>No</td>
-                <td>Max entries (default: 100)</td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      </div>
-
-      <div class="endpoint-card danger">
-        <div class="endpoint-header">
-          <span class="method post">POST</span>
-          <h3>/api/reset</h3>
-        </div>
-        <p class="endpoint-desc">⚠️ Reset entire database (delete all data).</p>
-      </div>
-
-      <div class="card">
-        <h2>Arduino/ESP32 Example</h2>
-        <div class="code-block">
-          <pre>{{ arduinoExample }}</pre>
-        </div>
-      </div>
-
-
-    </div>
     </div>
   </NuxtLayout>
 </template>
 
 <script setup>
-const registerExample = `{
-  "success": true,
-  "message": "Module registered successfully",
-  "session_id": "a1b2c3d4e5f6g7h8...",
-  "umid": "ESP32-001",
-  "moduleType": "temperature-sensor",
-  "status": "new"
-}`
+import { ref } from 'vue'
 
-const modulesExample = `{
-  "success": true,
-  "count": 2,
-  "modules": [
-    {
-      "umid": "ESP32-001",
-      "moduleType": "temperature-sensor",
-      "status": "active",
-      "dataCount": 150,
-      "lastSeen": "2025-11-01T11:45:00.000Z"
-    }
-  ]
-}`
+const activeTab = ref('endpoints')
 
-const arduinoExample = `#include <HTTPClient.h>
+const apiSections = [
+  {
+    title: 'Module Management',
+    endpoints: [
+      { method: 'GET', path: '/api/register', description: 'Register new module or get existing session' },
+      { method: 'GET', path: '/api/modules', description: 'Get all registered modules with status' },
+      { method: 'PUT', path: '/api/modules', description: 'Update module triggers and configuration' },
+      { method: 'POST', path: '/api/module-delete', description: 'Delete a module from the system' }
+    ]
+  },
+  {
+    title: 'Sensor Data',
+    endpoints: [
+      { method: 'POST', path: '/api/pool', description: 'Submit sensor readings from module' },
+      { method: 'GET', path: '/api/sensor-data', description: 'Retrieve sensor readings with filters' },
+      { method: 'GET', path: '/api/pool', description: 'Get pool statistics and recent activity' }
+    ]
+  },
+  {
+    title: 'Emergency System',
+    endpoints: [
+      { method: 'POST', path: '/api/emergency-tracker', description: 'Check modules for emergency conditions' },
+      { method: 'GET', path: '/api/emergency-history', description: 'Get emergency history and current status' }
+    ]
+  },
+  {
+    title: 'System Status',
+    endpoints: [
+      { method: 'GET', path: '/api/uptime', description: 'Get server uptime information' },
+      { method: 'GET', path: '/api/module-performance', description: 'Get performance metrics and rankings' },
+      { method: 'GET', path: '/api/trigger-stats', description: 'Get statistics about configured triggers' }
+    ]
+  },
+  {
+    title: 'Settings',
+    endpoints: [
+      { method: 'GET', path: '/api/settings', description: 'Retrieve system configuration' },
+      { method: 'POST', path: '/api/settings', description: 'Update system configuration' }
+    ]
+  }
+]
 
-// Register module
-String umid = "ESP32-" + WiFi.macAddress();
-String registerUrl = "http://server:3000/api/register?type=temperature-sensor&umid=" + umid;
-HTTPClient http;
-http.begin(registerUrl);
-int httpCode = http.GET();
-String sessionId = parseSessionId(http.getString());
+const arduinoExample = `#include <WiFi.h>
+#include <HTTPClient.h>
 
-// Send data
-float temp = dht.readTemperature();
-String dataUrl = "http://server:3000/api/pool?session_id=" + sessionId + "&temperature=" + String(temp);
-http.begin(dataUrl);
-http.GET();`
+const char* server = "http://192.168.1.100:3000";
+String sessionId = "";
 
-const copy = (text) => {
-  navigator.clipboard.writeText(text)
-  alert('✅ Copied to clipboard!')
+void setup() {
+  // Register module
+  String url = String(server) + "/api/register?type=temp-sensor&umid=ESP32-001";
+  HTTPClient http;
+  http.begin(url);
+  int code = http.GET();
+  // Parse sessionId from response
 }
 
-const openFullDocs = () => {
-  window.open('/API.md', '_blank')
+void loop() {
+  float temp = readTemperature();
+  
+  // Send data
+  HTTPClient http;
+  http.begin(String(server) + "/api/pool");
+  http.addHeader("Content-Type", "application/json");
+  String payload = "{\\"session_id\\":\\"" + sessionId + "\\",\\"data\\":{\\"temp\\":" + String(temp) + "}}";
+  http.POST(payload);
+  delay(5000);
+}`
+
+const jsExample = `// Fetch dashboard stats
+async function getStats() {
+  const [modules, sensors] = await Promise.all([
+    fetch('/api/modules?_t=' + Date.now()),
+    fetch('/api/sensor-data?limit=100')
+  ]);
+  return {
+    modules: await modules.json(),
+    sensors: await sensors.json()
+  };
 }
+
+// Check emergencies
+async function checkEmergency() {
+  await fetch('/api/emergency-tracker', { method: 'POST' });
+  const res = await fetch('/api/emergency-history');
+  const data = await res.json();
+  return data.current.isActive;
+}`
 </script>
 
 <style scoped>
-.page-container {
+.api-docs-container {
   padding: 2rem;
-  max-width: 1000px;
+  max-width: 1200px;
   margin: 0 auto;
 }
 
-.page-header {
-  margin-bottom: 2rem;
-}
-
 .page-header h1 {
-  font-size: 1.875rem;
-  font-weight: 700;
+  font-size: 2rem;
   color: var(--text-primary);
-  margin: 0 0 0.5rem 0;
+  margin-bottom: 0.5rem;
 }
 
 .page-header p {
-  font-size: 0.938rem;
   color: var(--text-secondary);
-  margin: 0;
 }
 
-.api-docs {
+.nav-tabs {
   display: flex;
-  flex-direction: column;
-  gap: 1.5rem;
+  gap: 0.5rem;
+  margin: 2rem 0;
+  background: var(--surface);
+  padding: 0.5rem;
+  border-radius: 12px;
+  border: 1px solid var(--border);
 }
 
-.card, .endpoint-card {
+.nav-tabs button {
+  flex: 1;
+  padding: 0.75rem 1.5rem;
+  background: transparent;
+  border: none;
+  border-radius: 8px;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.nav-tabs button:hover {
+  background: rgba(59, 130, 246, 0.1);
+}
+
+.nav-tabs button.active {
+  background: var(--primary);
+  color: white;
+}
+
+.tab-content {
+  animation: fadeIn 0.3s;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.api-section {
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: 12px;
   padding: 1.5rem;
-  animation: fadeInScale 0.4s ease;
+  margin-bottom: 1.5rem;
 }
 
-.endpoint-card.danger {
-  border-color: rgba(239, 68, 68, 0.3);
-  background: rgba(239, 68, 68, 0.02);
-}
-
-.card-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
+.api-section h2 {
+  color: var(--text-primary);
   margin-bottom: 1rem;
+  font-size: 1.25rem;
 }
 
-.card h2, .endpoint-card h3 {
-  font-size: 1.125rem;
-  font-weight: 600;
-  color: var(--text-primary);
-  margin: 0 0 1rem 0;
-}
-
-.badge {
-  padding: 0.25rem 0.625rem;
-  background: var(--accent);
-  color: black;
-  border-radius: 12px;
-  font-size: 0.75rem;
-  font-weight: 600;
-}
-
-.card p, .endpoint-desc {
-  font-size: 0.875rem;
-  color: var(--text-secondary);
-  line-height: 1.6;
-  margin: 0 0 1rem 0;
-}
-
-.code-block {
-  background: var(--bg);
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  overflow: hidden;
-  margin: 1rem 0;
-}
-
-.code-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 0.75rem 1rem;
-  background: rgba(0, 0, 0, 0.05);
-  border-bottom: 1px solid var(--border);
-  font-size: 0.75rem;
-  font-weight: 600;
-  color: var(--text-secondary);
-}
-
-.copy-btn {
-  padding: 0.25rem 0.5rem;
-  background: transparent;
-  border: 1px solid var(--border);
-  border-radius: 4px;
-  color: var(--text-secondary);
-  font-size: 0.688rem;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  font-family: inherit;
-}
-
-.copy-btn:hover {
-  background: var(--surface);
-  color: var(--text-primary);
-}
-
-.code-block code, .code-block pre {
-  display: block;
+.endpoint {
   padding: 1rem;
-  font-family: 'Monaco', 'Courier New', monospace;
-  font-size: 0.813rem;
-  color: var(--text-primary);
-  overflow-x: auto;
-  margin: 0;
-  line-height: 1.6;
+  background: var(--bg);
+  border-radius: 8px;
+  margin-bottom: 0.75rem;
+}
+
+.endpoint:last-child {
+  margin-bottom: 0;
 }
 
 .endpoint-header {
   display: flex;
   align-items: center;
-  gap: 0.75rem;
-  margin-bottom: 0.75rem;
+  gap: 1rem;
+  margin-bottom: 0.5rem;
 }
 
 .method {
-  padding: 0.375rem 0.625rem;
+  padding: 0.25rem 0.75rem;
   border-radius: 6px;
-  font-weight: 700;
   font-size: 0.75rem;
+  font-weight: 600;
   text-transform: uppercase;
-  letter-spacing: 0.5px;
 }
 
-.method.get {
+.method.GET {
   background: rgba(16, 185, 129, 0.1);
   color: #10b981;
 }
 
-.method.post {
-  background: rgba(239, 68, 68, 0.1);
-  color: #ef4444;
+.method.POST {
+  background: rgba(59, 130, 246, 0.1);
+  color: #3b82f6;
 }
 
-.endpoint-section {
-  margin: 1.5rem 0;
+.method.PUT {
+  background: rgba(245, 158, 11, 0.1);
+  color: #f59e0b;
 }
 
-.endpoint-section h4 {
-  font-size: 0.938rem;
-  font-weight: 600;
+.path {
+  font-family: monospace;
   color: var(--text-primary);
-  margin: 0 0 0.75rem 0;
+  font-weight: 500;
 }
 
-.param-table {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: 0.813rem;
-}
-
-.param-table th {
-  text-align: left;
-  padding: 0.75rem;
-  background: var(--bg);
-  font-weight: 600;
+.endpoint p {
   color: var(--text-secondary);
-  border-bottom: 1px solid var(--border);
+  font-size: 0.9rem;
 }
 
-.param-table td {
-  padding: 0.75rem;
-  border-bottom: 1px solid var(--border);
+.status-section {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 1.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.status-section h2 {
   color: var(--text-primary);
+  margin-bottom: 1rem;
 }
 
-.param-table code {
+.status-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 1rem;
+}
+
+.status-item {
+  padding: 1rem;
   background: var(--bg);
-  padding: 0.125rem 0.375rem;
-  border-radius: 4px;
-  font-family: 'Monaco', 'Courier New', monospace;
-  font-size: 0.75rem;
+  border-radius: 8px;
 }
 
-.btn-primary {
-  padding: 0.75rem 1.25rem;
-  background: var(--accent);
-  border: 1px solid var(--accent);
-  border-radius: 8px;
-  color: var(--bg);
-  font-size: 0.875rem;
-  font-weight: 600;
-  font-family: inherit;
-  cursor: pointer;
+.badge {
   display: inline-flex;
   align-items: center;
   gap: 0.5rem;
-  transition: all 0.2s ease;
-  margin-top: 1rem;
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
 }
 
-.btn-primary:hover {
-  background: transparent;
-  color: var(--accent);
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(255, 255, 255, 0.15);
+.badge.healthy {
+  background: rgba(16, 185, 129, 0.1);
+  color: #10b981;
+  border: 1px solid #10b981;
 }
 
-@keyframes fadeInScale {
-  from {
-    opacity: 0;
-    transform: scale(0.95);
-  }
-  to {
-    opacity: 1;
-    transform: scale(1);
-  }
+.badge.warning {
+  background: rgba(245, 158, 11, 0.1);
+  color: #f59e0b;
+  border: 1px solid #f59e0b;
+}
+
+.badge.critical {
+  background: rgba(239, 68, 68, 0.1);
+  color: #ef4444;
+  border: 1px solid #ef4444;
+}
+
+.status-item p {
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+}
+
+.example-section {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 1.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.example-section h2 {
+  color: var(--text-primary);
+  margin-bottom: 1rem;
+}
+
+pre {
+  background: var(--bg);
+  padding: 1rem;
+  border-radius: 8px;
+  overflow-x: auto;
+}
+
+code {
+  font-family: 'Courier New', monospace;
+  color: var(--text-primary);
+  font-size: 0.875rem;
+  line-height: 1.6;
 }
 </style>

@@ -34,67 +34,118 @@
 
     <div class="settings-grid">
       <div class="card">
-        <h2 class="section-title">Data Configuration</h2>
+        <h2 class="section-title">Data Management</h2>
         <div class="setting-group">
           <div class="setting-item">
             <div class="setting-label">
-              <span>Data Retention</span>
-              <small>Maximum number of sensor data entries to keep</small>
+              <span>Maximum Sensor Readings</span>
+              <small>How many sensor data entries to keep in history before deleting old ones</small>
             </div>
-            <input type="number" v-model.number="settingsStore.dataRetention" class="setting-input" />
+            <div class="input-with-unit">
+              <input type="number" v-model.number="settingsStore.dataRetention" class="setting-input" min="100" step="100" />
+              <span class="unit">readings</span>
+            </div>
           </div>
 
           <div class="setting-item">
             <div class="setting-label">
-              <span>Auto-refresh Interval</span>
-              <small>Update frequency for real-time data (seconds)</small>
+              <span>Dashboard Refresh Rate</span>
+              <small>How often the dashboard automatically updates with new data</small>
             </div>
-            <input type="number" v-model.number="settingsStore.refreshInterval" class="setting-input" />
+            <div class="input-with-unit">
+              <input type="number" v-model.number="settingsStore.refreshInterval" class="setting-input" min="1" max="60" />
+              <span class="unit">seconds</span>
+            </div>
           </div>
         </div>
       </div>
 
       <div class="card">
-        <h2 class="section-title">Module Settings</h2>
+        <h2 class="section-title">Module Status Thresholds</h2>
+        <p class="section-description">Control when modules are marked as Online, Inactive, or Offline based on last communication time</p>
         <div class="setting-group">
           <div class="setting-item">
             <div class="setting-label">
-              <span>Session Timeout</span>
-              <small>How long sessions remain valid (hours)</small>
+              <span>Online Status Timeout</span>
+              <small>Module shows as <strong>Online</strong> if last seen within this time</small>
             </div>
-            <input type="number" v-model.number="settingsStore.sessionTimeout" class="setting-input" />
+            <div class="input-with-unit">
+              <input type="number" v-model.number="settingsStore.moduleActiveThreshold" class="setting-input" min="5" max="300" />
+              <span class="unit">seconds</span>
+            </div>
           </div>
 
           <div class="setting-item">
             <div class="setting-label">
-              <span>Inactive Module Threshold</span>
-              <small>Mark module as offline after (minutes)</small>
+              <span>Inactive Status Timeout</span>
+              <small>Module shows as <strong>Inactive</strong> if not seen for this long</small>
             </div>
-            <input type="number" v-model.number="settingsStore.inactiveThreshold" class="setting-input" />
+            <div class="input-with-unit">
+              <input type="number" v-model.number="settingsStore.moduleInactiveThreshold" class="setting-input" min="30" max="7200" />
+              <span class="unit">seconds</span>
+            </div>
+          </div>
+
+          <div class="status-explanation">
+            <div class="status-flow">
+              <div class="status-step">
+                <div class="status-dot online"></div>
+                <div>
+                  <strong>Online</strong>
+                  <span>&lt; {{ settingsStore.moduleActiveThreshold }}s</span>
+                </div>
+              </div>
+              <div class="arrow">→</div>
+              <div class="status-step">
+                <div class="status-dot inactive"></div>
+                <div>
+                  <strong>Inactive</strong>
+                  <span>{{ settingsStore.moduleActiveThreshold }}s - {{ settingsStore.moduleInactiveThreshold }}s</span>
+                </div>
+              </div>
+              <div class="arrow">→</div>
+              <div class="status-step">
+                <div class="status-dot offline"></div>
+                <div>
+                  <strong>Offline</strong>
+                  <span>&gt; {{ settingsStore.moduleInactiveThreshold }}s</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="divider"></div>
+
+          <div class="setting-item">
+            <div class="setting-label">
+              <span>Module Session Duration</span>
+              <small>How long a module connection session stays valid before requiring re-registration</small>
+            </div>
+            <div class="input-with-unit">
+              <input type="number" v-model.number="settingsStore.sessionTimeout" class="setting-input" min="1" max="168" />
+              <span class="unit">hours</span>
+            </div>
           </div>
 
           <div class="setting-item">
             <div class="setting-label">
-              <span>Module Active Threshold</span>
-              <small>Module considered active if seen within (seconds)</small>
+              <span>Legacy Inactive Threshold</span>
+              <small>Old threshold setting (kept for compatibility, use Online/Inactive timeouts above instead)</small>
             </div>
-            <input type="number" v-model.number="settingsStore.moduleActiveThreshold" class="setting-input" />
+            <div class="input-with-unit">
+              <input type="number" v-model.number="settingsStore.inactiveThreshold" class="setting-input" min="1" max="60" />
+              <span class="unit">minutes</span>
+            </div>
           </div>
 
-          <div class="setting-item">
-            <div class="setting-label">
-              <span>Module Inactive Threshold</span>
-              <small>Module considered offline if not seen for (seconds)</small>
-            </div>
-            <input type="number" v-model.number="settingsStore.moduleInactiveThreshold" class="setting-input" />
-          </div>
+          <div class="divider"></div>
 
           <div class="setting-item checkbox-item">
             <label class="checkbox-label">
               <input type="checkbox" v-model="settingsStore.enableNotifications" />
               <div>
                 <span>Enable Notifications</span>
-                <small>Show alerts for critical events</small>
+                <small>Show browser notifications for critical system events and module status changes</small>
               </div>
             </label>
           </div>
@@ -103,8 +154,8 @@
             <label class="checkbox-label">
               <input type="checkbox" v-model="settingsStore.enableAutoRefresh" />
               <div>
-                <span>Auto-refresh Data</span>
-                <small>Automatically update dashboard data</small>
+                <span>Enable Auto-Refresh</span>
+                <small>Automatically fetch latest data at the interval specified above</small>
               </div>
             </label>
           </div>
@@ -112,7 +163,8 @@
       </div>
 
       <div class="card">
-        <h2 class="section-title">Emergency Triggers</h2>
+        <h2 class="section-title">Emergency Alert System</h2>
+        <p class="section-description">Configure warnings when sensor values exceed safe thresholds</p>
         <div class="setting-group">
           <div class="setting-item checkbox-item">
             <label class="checkbox-label highlight">
@@ -124,9 +176,9 @@
                     <line x1="12" y1="9" x2="12" y2="13"/>
                     <line x1="12" y1="17" x2="12.01" y2="17"/>
                   </svg>
-                  Enable Emergency Triggers
+                  Enable Emergency Threshold Monitoring
                 </span>
-                <small>Monitor sensor thresholds and trigger emergency alerts</small>
+                <small>Activates emergency status when sensor readings exceed configured thresholds (e.g., temperature too high)</small>
               </div>
             </label>
           </div>
@@ -141,9 +193,9 @@
                     <path d="M15.54 8.46a5 5 0 0 1 0 7.07"/>
                     <path d="M19.07 4.93a10 10 0 0 1 0 14.14"/>
                   </svg>
-                  Enable Audio Alerts
+                  Play Warning Sound
                 </span>
-                <small>Play warning sound when emergency is triggered</small>
+                <small>Plays an audible alert when emergency conditions are detected (requires Emergency Monitoring enabled)</small>
               </div>
             </label>
           </div>
@@ -172,8 +224,8 @@
               <line x1="12" y1="8" x2="12.01" y2="8"/>
             </svg>
             <div>
-              <strong>About Emergency Triggers</strong>
-              <p>When enabled, modules can set threshold values that trigger emergency status. Configure individual module triggers in the Modules page.</p>
+              <strong>How Emergency Triggers Work</strong>
+              <p>Each module can set its own threshold values (e.g., "alert if temperature > 40°C"). When a sensor reading exceeds these thresholds, the module's status changes to "EMERGENCY" and optionally plays a warning sound. Configure individual thresholds on the <strong>Modules</strong> page.</p>
             </div>
           </div>
         </div>
@@ -755,6 +807,112 @@ const resetDatabase = async () => {
 .btn-test-audio svg {
   width: 16px;
   height: 16px;
+}
+
+.section-description {
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+  margin: -0.5rem 0 1.5rem 0;
+  line-height: 1.5;
+}
+
+.input-with-unit {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.input-with-unit .setting-input {
+  flex: 1;
+  max-width: 150px;
+}
+
+.input-with-unit .unit {
+  font-size: 0.875rem;
+  color: var(--text-tertiary);
+  font-weight: 500;
+}
+
+.help-text {
+  font-size: 0.75rem;
+  color: var(--text-tertiary);
+  margin-top: 0.5rem;
+  padding-left: 0.5rem;
+  border-left: 2px solid var(--border);
+}
+
+.divider {
+  height: 1px;
+  background: var(--border);
+  margin: 1.5rem 0;
+}
+
+.status-explanation {
+  margin-top: 1.5rem;
+  padding: 1rem;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 0.5rem;
+}
+
+.status-flow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.status-step {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex: 1;
+  min-width: 140px;
+}
+
+.status-step > div {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.status-step strong {
+  font-size: 0.875rem;
+  color: var(--text-primary);
+}
+
+.status-step span {
+  font-size: 0.75rem;
+  color: var(--text-tertiary);
+}
+
+.status-dot {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.status-dot.online {
+  background: #10b981;
+  box-shadow: 0 0 12px rgba(16, 185, 129, 0.5);
+}
+
+.status-dot.inactive {
+  background: #f59e0b;
+  box-shadow: 0 0 12px rgba(245, 158, 11, 0.5);
+}
+
+.status-dot.offline {
+  background: #ef4444;
+  box-shadow: 0 0 12px rgba(239, 68, 68, 0.5);
+}
+
+.arrow {
+  color: var(--text-tertiary);
+  font-size: 1.25rem;
+  flex-shrink: 0;
 }
 
 @keyframes fadeInScale {

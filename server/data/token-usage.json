@@ -1,0 +1,14 @@
+{
+  "daily": {
+    "2025-11-03": {
+      "requests": 1,
+      "tokens": 720
+    }
+  },
+  "minute": [
+    {
+      "timestamp": 1762194961667,
+      "tokens": 720
+    }
+  ]
+}

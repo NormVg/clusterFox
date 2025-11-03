@@ -232,7 +232,7 @@ onMounted(async () => {
   const settingsStore = useSettingsStore()
   await settingsStore.loadSettings()
   const intervalMs = (settingsStore.refreshInterval || 10) * 1000
-  
+
   await nextTick() // Ensure DOM is ready
   await fetchModules()
   nextTick(() => {

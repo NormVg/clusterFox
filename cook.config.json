@@ -4,7 +4,7 @@
     "stir": true,
     "cmd": {
         "serve": [
-            "pnpm run dev"
+            "pnpm run dev --host"
         ],
         "build": [
             "pnpm install"

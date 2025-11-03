@@ -83,9 +83,11 @@ const stats = ref({
 })
 
 const startTime = ref(Date.now())
+const currentTime = ref(Date.now())
 const dataTrend = ref('up')
 const isUpdating = ref(false)
 let refreshInterval = null
+let uptimeInterval = null
 
 const modulePercentage = computed(() => {
   if (stats.value.totalModules === 0) return 0
@@ -100,11 +102,12 @@ const overallStatus = computed(() => {
 })
 
 const uptime = computed(() => {
-  const now = Date.now()
-  const diff = now - startTime.value
-  const hours = Math.floor(diff / 3600000)
+  const diff = currentTime.value - startTime.value
+  const days = Math.floor(diff / 86400000)
+  const hours = Math.floor((diff % 86400000) / 3600000)
   const minutes = Math.floor((diff % 3600000) / 60000)
 
+  if (days > 0) return `${days}d ${hours}h`
   if (hours > 0) return `${hours}h ${minutes}m`
   return `${minutes}m`
 })
@@ -116,21 +119,26 @@ const fetchStats = async () => {
   isUpdating.value = true
 
   try {
-    // Fetch both endpoints in parallel for faster loading
-    const [modulesResponse, sensorResponse] = await Promise.all([
+    // Fetch all endpoints in parallel for faster loading
+    const [modulesResponse, sensorResponse, uptimeResponse] = await Promise.all([
       fetch('/api/modules'),
-      fetch('/api/sensor-data?limit=100') // Reduced from 1000 to 100 for faster response
+      fetch('/api/sensor-data?limit=100'), // Reduced from 1000 to 100 for faster response
+      fetch('/api/uptime')
     ])
 
     const modulesData = await modulesResponse.json()
     const sensorData = await sensorResponse.json()
+    const uptimeData = await uptimeResponse.json()
 
     // Process modules data
     if (modulesData.success) {
+      const settingsStore = useSettingsStore()
       const now = Date.now()
+      const activeThreshold = (settingsStore.moduleActiveThreshold || 300) * 1000 // Convert to ms
+      
       const activeModules = modulesData.modules.filter(m => {
         const lastSeen = new Date(m.lastSeen).getTime()
-        return (now - lastSeen) < 300000 // Active if seen in last 5 minutes
+        return (now - lastSeen) < activeThreshold
       })
 
       stats.value.activeModules = activeModules.length
@@ -156,6 +164,12 @@ const fetchStats = async () => {
       stats.value.lastMinuteCount = currentMinuteCount
       stats.value.dataRate = currentMinuteCount
     }
+
+    // Update server start time from API
+    if (uptimeData.success) {
+      startTime.value = uptimeData.startTime
+      currentTime.value = uptimeData.currentTime
+    }
   } catch (error) {
     console.error('Error fetching system stats:', error)
   } finally {
@@ -170,22 +184,29 @@ const formatNumber = (num) => {
 }
 
 onMounted(async () => {
-  const settingsStore = useSettingsStore()
-  await settingsStore.loadSettings()
-  const intervalMs = (settingsStore.refreshInterval || 10) * 1000
-  
+  // Fetch stats immediately without waiting for settings
   fetchStats()
-  refreshInterval = setInterval(fetchStats, intervalMs)
+  
+  // Then load settings in parallel
+  const settingsStore = useSettingsStore()
+  settingsStore.loadSettings().then(() => {
+    const intervalMs = (settingsStore.refreshInterval || 10) * 1000
+    if (refreshInterval) clearInterval(refreshInterval)
+    refreshInterval = setInterval(fetchStats, intervalMs)
+  })
 
-  // Update uptime every minute
-  setInterval(() => {
-    uptime.value
-  }, 60000)
+  // Update current time every 30 seconds to refresh uptime display
+  uptimeInterval = setInterval(() => {
+    currentTime.value = Date.now()
+  }, 30000)
 })
 
 onUnmounted(() => {
   if (refreshInterval) {
     clearInterval(refreshInterval)
+  }
+  if (uptimeInterval) {
+    clearInterval(uptimeInterval)
   }
 })
 </script>

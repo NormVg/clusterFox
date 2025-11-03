@@ -1,56 +1,12 @@
 {
   "connections": [
     {
-      "from": "weather-station-002",
-      "to": "smart-garden-004"
+      "from": "alcohol-mq3-001",
+      "to": "butane-mq2-001"
     },
     {
-      "from": "smart-garden-004",
-      "to": "air-quality-003"
-    },
-    {
-      "from": "smart-garden-004",
-      "to": "umid-humidity-templature-sernsor-module-19191-222"
-    },
-    {
-      "from": "motion-sensor-005",
-      "to": "weather-station-002"
-    },
-    {
-      "from": "temp-humi-sensor-001",
-      "to": "power-monitor-006"
-    },
-    {
-      "from": "temp-humi-sensor-001",
-      "to": "motion-sensor-005"
-    },
-    {
-      "from": "umid-humidity-templature-sernsor-module-19191",
-      "to": "smart-garden-004"
-    },
-    {
-      "from": "test-module-12345",
-      "to": "motion-sensor-005"
-    },
-    {
-      "from": "air-quality-003",
-      "to": "umid-humidity-templature-sernsor-module-19191-222"
-    },
-    {
-      "from": "umid-humidity-templature-sernsor-module-19191-222",
-      "to": "power-monitor-006"
-    },
-    {
-      "from": "umid-humidity-templature-sernsor-module-19191",
-      "to": "power-monitor-006"
-    },
-    {
-      "from": "CUTOFF-2673",
-      "to": "umid-humidity-templature-sernsor-module-19191-222"
-    },
-    {
-      "from": "weather-station-002",
-      "to": "air-quality-003"
+      "from": "butane-mq2-001",
+      "to": "temprature-humidity-dht11-001"
     }
   ]
 }

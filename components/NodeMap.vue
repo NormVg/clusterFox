@@ -403,7 +403,7 @@ onMounted(async () => {
   const settingsStore = useSettingsStore()
   await settingsStore.loadSettings()
   const intervalMs = (settingsStore.refreshInterval || 10) * 1000
-  
+
   window.addEventListener('mousemove', handleMouseMove)
   window.addEventListener('mouseup', handleMouseUp)
 

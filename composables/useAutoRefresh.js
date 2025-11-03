@@ -6,7 +6,7 @@ export const useAutoRefresh = (callback, intervalMs = null) => {
   const settingsStore = useSettingsStore()
   const isRefreshing = ref(false)
   let intervalId = null
-  
+
   // Use settings refreshInterval if no interval provided, otherwise use provided interval
   const currentInterval = computed(() => {
     if (intervalMs !== null) {

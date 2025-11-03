@@ -7,6 +7,14 @@ export default defineEventHandler(async (event) => {
     const { sourceModuleUmid, cutoffModuleUmid, action } = body
 
     const mappingsPath = path.join(process.cwd(), 'server', 'data', 'cutoff-mappings.json')
+    // Ensure file exists
+    if (!fs.existsSync(mappingsPath)) {
+      const dir = path.dirname(mappingsPath)
+      if (!fs.existsSync(dir)) {
+        fs.mkdirSync(dir, { recursive: true })
+      }
+      fs.writeFileSync(mappingsPath, JSON.stringify({ mappings: [] }, null, 2))
+    }
     const mappingsData = JSON.parse(fs.readFileSync(mappingsPath, 'utf-8'))
 
     if (action === 'add') {

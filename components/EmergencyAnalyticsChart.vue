@@ -223,20 +223,20 @@ const fetchHistory = async () => {
 // Save current emergency count to history using intelligent tracker
 const saveToHistory = async (force = false) => {
   const currentCount = emergencyModules.value?.length || 0
-  
+
   // Only save if count changed or forced
   if (!force && currentCount === lastRecordedCount.value) return
-  
+
   lastRecordedCount.value = currentCount
-  
+
   try {
     // Use the intelligent emergency tracker that checks actual sensor data
     const response = await $fetch('/api/emergency-tracker', {
       method: 'POST'
     })
-    
+
     console.log('✅ Tracked emergency state:', response)
-    
+
     // Refresh history after saving
     await fetchHistory()
   } catch (error) {
@@ -251,11 +251,11 @@ const emergencyUMIDs = ref(new Set())
 watch(emergencyModules, async (newModules) => {
   const newUMIDs = new Set(newModules?.map(m => m.umid) || [])
   const oldUMIDs = emergencyUMIDs.value
-  
+
   // Check if any module entered or exited emergency state
   const entered = [...newUMIDs].filter(umid => !oldUMIDs.has(umid))
   const exited = [...oldUMIDs].filter(umid => !newUMIDs.has(umid))
-  
+
   if (entered.length > 0 || exited.length > 0) {
     console.log('🚨 EMERGENCY STATE CHANGE DETECTED:')
     if (entered.length > 0) {
@@ -265,11 +265,11 @@ watch(emergencyModules, async (newModules) => {
       console.log('  ✅ Exited emergency:', exited)
     }
     console.log(`  📊 Count: ${oldUMIDs.size} → ${newUMIDs.size}`)
-    
+
     // Save this event to history
     await saveToHistory(true)
   }
-  
+
   // Update tracked state
   emergencyUMIDs.value = newUMIDs
 }, { deep: true })
@@ -277,10 +277,10 @@ watch(emergencyModules, async (newModules) => {
 // Initialize
 onMounted(async () => {
   await fetchHistory()
-  
+
   // Initialize the emergency state tracking
   emergencyUMIDs.value = new Set(emergencyModules.value?.map(m => m.umid) || [])
-  
+
   // Save initial state if there are emergencies
   if (emergencyUMIDs.value.size > 0) {
     console.log('🚨 Initial emergency state detected:', emergencyUMIDs.value.size, 'modules')
@@ -304,10 +304,10 @@ const stats = computed(() => {
 const processedData = computed(() => {
   const now = Date.now()
   const twentyFourHoursAgo = now - 24 * 60 * 60 * 1000
-  
+
   // Start with actual historical events (not grouped by hour)
   let dataPoints = []
-  
+
   if (historyData.value.length > 0) {
     // Filter events from last 24 hours and map to data points
     dataPoints = historyData.value
@@ -318,11 +318,11 @@ const processedData = computed(() => {
         eventType: entry.eventType
       }))
   }
-  
+
   // Add current live data as the most recent point if it's different from last recorded
   const currentCount = emergencyModules.value?.length || 0
   const lastRecorded = dataPoints.length > 0 ? dataPoints[dataPoints.length - 1] : null
-  
+
   // Only add current if it's different from last recorded or if there's no history
   if (!lastRecorded || lastRecorded.count !== currentCount) {
     dataPoints.push({
@@ -331,7 +331,7 @@ const processedData = computed(() => {
       eventType: null // Current live data has no event type
     })
   }
-  
+
   // If no data at all, create a baseline
   if (dataPoints.length === 0) {
     // Create baseline with start and end points
@@ -348,33 +348,33 @@ const processedData = computed(() => {
       }
     ]
   }
-  
+
   // Sort by timestamp
-  const sorted = dataPoints.sort((a, b) => 
+  const sorted = dataPoints.sort((a, b) =>
     new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()
   )
-  
+
   console.log('📊 Graph data points:', sorted.map(d => ({
     time: new Date(d.timestamp).toLocaleString(),
     count: d.count,
     event: d.eventType
   })))
-  
+
   return sorted
 })
 
 // Chart.js data configuration
 const chartData = computed(() => {
   const data = processedData.value
-  
+
   return {
     labels: data.map(d => {
       const date = new Date(d.timestamp)
       // Show time with minutes for more precision
-      return date.toLocaleTimeString('en-US', { 
-        hour: 'numeric', 
+      return date.toLocaleTimeString('en-US', {
+        hour: 'numeric',
         minute: '2-digit',
-        hour12: true 
+        hour12: true
       })
     }),
     datasets: [
@@ -423,12 +423,12 @@ const chartOptions = computed(() => ({
           const index = context[0].dataIndex
           const d = processedData.value[index]
           const date = new Date(d.timestamp)
-          return date.toLocaleString('en-US', { 
-            month: 'short', 
+          return date.toLocaleString('en-US', {
+            month: 'short',
             day: 'numeric',
             hour: 'numeric',
             minute: '2-digit',
-            hour12: true 
+            hour12: true
           })
         },
         label: (context) => {
@@ -436,7 +436,7 @@ const chartOptions = computed(() => ({
           const d = processedData.value[index]
           const count = context.parsed.y
           const countText = `${count} ${count === 1 ? 'emergency' : 'emergencies'}`
-          
+
           if (d.eventType) {
             const eventLabels = {
               'emergency_started': '🚨 Emergency Started',
@@ -445,7 +445,7 @@ const chartOptions = computed(() => ({
             }
             return [countText, eventLabels[d.eventType] || d.eventType]
           }
-          
+
           return countText
         }
       }
@@ -509,18 +509,18 @@ const formatLastTracked = (timestamp) => {
 
   if (diffMins < 1) return 'just now'
   if (diffMins < 60) return `${diffMins} min ago`
-  
+
   const diffHours = Math.floor(diffMins / 60)
   if (diffHours < 24) {
     return `${diffHours} hour${diffHours > 1 ? 's' : ''} ago at ${date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true })}`
   }
-  
-  return date.toLocaleString('en-US', { 
-    month: 'short', 
-    day: 'numeric', 
-    hour: 'numeric', 
+
+  return date.toLocaleString('en-US', {
+    month: 'short',
+    day: 'numeric',
+    hour: 'numeric',
     minute: '2-digit',
-    hour12: true 
+    hour12: true
   })
 }
 

@@ -42,14 +42,18 @@ export default defineEventHandler(async (event) => {
       if (!latestReading) return
 
       const triggeredConditions = []
-      
+
       // Check each trigger
       Object.keys(module.triggers).forEach(field => {
         const trigger = module.triggers[field]
         if (!trigger.enabled) return
 
-        const value = latestReading.data[field]
-        if (value === undefined) return
+        const rawValue = latestReading.data[field]
+        if (rawValue === undefined || rawValue === null) return
+
+        // Convert to number for proper comparison
+        const value = typeof rawValue === 'string' ? parseFloat(rawValue) : rawValue
+        if (isNaN(value)) return
 
         let isTriggered = false
         if (trigger.condition === 'above' && value > trigger.threshold) {
@@ -88,14 +92,14 @@ export default defineEventHandler(async (event) => {
     // Detect state changes
     let eventType = 'update'
     const previousEntry = history.length > 0 ? history[history.length - 1] : null
-    
+
     if (previousEntry) {
       const prevUMIDs = new Set(previousEntry.modules.map(m => m.umid))
       const currUMIDs = new Set(emergencyModules.map(m => m.umid))
-      
+
       const entered = emergencyModules.filter(m => !prevUMIDs.has(m.umid))
       const exited = Array.from(prevUMIDs).filter(umid => !currUMIDs.has(umid))
-      
+
       if (entered.length > 0 && exited.length === 0) {
         eventType = 'emergency_started'
       } else if (exited.length > 0 && entered.length === 0) {
@@ -121,7 +125,7 @@ export default defineEventHandler(async (event) => {
     }
 
     history.push(entry)
-    
+
     console.log(`📝 Emergency event: ${eventType} | Count: ${emergencyModules.length} | Modules: [${emergencyModules.map(m => m.umid).join(', ')}]`)
 
     // Keep only last 7 days
