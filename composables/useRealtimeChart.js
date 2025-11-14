@@ -16,6 +16,7 @@ export function useRealtimeChart() {
 
   // Format field name for display
   const formatFieldName = (field) => {
+    if (field === 'all') return 'All Data Fields'
     return field
       .split('_')
       .map(word => word.charAt(0).toUpperCase() + word.slice(1))
@@ -38,14 +39,15 @@ export function useRealtimeChart() {
       }
     })
 
-    availableFields.value = Array.from(fieldsSet).sort()
+    // Add "All" option at the beginning
+    availableFields.value = ['all', ...Array.from(fieldsSet).sort()]
     console.log('✅ Available fields:', availableFields.value)
 
-    // Auto-select first field if none selected
+    // Auto-select "All" if none selected
     if (availableFields.value.length > 0 && !selectedDataField.value) {
-      selectedDataField.value = availableFields.value[0]
-      console.log('🎯 Auto-selected field:', selectedDataField.value)
-    } else if (availableFields.value.length === 0) {
+      selectedDataField.value = 'all'
+      console.log('🎯 Auto-selected field: all')
+    } else if (availableFields.value.length === 1) {
       console.warn('⚠️ No fields found in data!')
     }
   }

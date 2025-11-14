@@ -20,7 +20,7 @@
       "lastTriggeredAt": "2025-11-14T17:23:34.655Z"
     },
     {
-      "session_id": "e6493959151b397813bf46d57e0ba5283287c1134d2e2de2c8a4c2d2cc93b1db",
+      "session_id": "312403fb2cdec881cdda5be6aa0bc198a9780bfc250bf4ff57a1114992bb164e",
       "umid": "temperature-humidity-001",
       "moduleType": "temperature-humidity",
       "typeComponents": [
@@ -28,10 +28,10 @@
         "humidity"
       ],
       "registeredAt": "2025-11-14T16:19:46.876Z",
-      "lastSeen": "2025-11-14T16:28:30.627Z",
+      "lastSeen": "2025-11-14T18:23:53.780Z",
       "status": "active",
-      "dataCount": 64,
-      "sessionCreatedAt": "2025-11-14T16:27:56.171Z"
+      "dataCount": 1063,
+      "sessionCreatedAt": "2025-11-14T17:50:36.646Z"
     },
     {
       "session_id": "aa136475248cb19b69e77783326913d0fc69ed50493004682608ecdc4aabe11f",
@@ -60,7 +60,7 @@
       }
     },
     {
-      "session_id": "02ffb49b6bd26629da17fac18e55d6de1e5ae23824961508002365ad871ed71f",
+      "session_id": "bcb034a117c46790bbca4a9590f66eb6f50946558cda0b11db4a77c1f59392ac",
       "umid": "alcohol-001",
       "moduleType": "alcohol-sensor",
       "typeComponents": [
@@ -68,10 +68,10 @@
         "sensor"
       ],
       "registeredAt": "2025-11-14T17:01:44.402Z",
-      "lastSeen": "2025-11-14T17:24:22.668Z",
+      "lastSeen": "2025-11-14T18:23:50.954Z",
       "status": "active",
-      "dataCount": 229,
-      "sessionCreatedAt": "2025-11-14T17:14:40.619Z",
+      "dataCount": 905,
+      "sessionCreatedAt": "2025-11-14T17:50:05.519Z",
       "triggers": {
         "alcohol": {
           "enabled": true,

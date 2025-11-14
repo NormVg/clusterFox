@@ -115,13 +115,58 @@ const updateChart = () => {
 
   // Get data from composable
   const labels = getChartLabels()
-  const values = getChartValues()
-  const colors = getFieldColor(selectedDataField.value)
 
   // Destroy existing chart
   if (chartInstance) {
     chartInstance.destroy()
     chartInstance = null
+  }
+
+  // Create datasets
+  let datasets = []
+
+  if (selectedDataField.value === 'all') {
+    // Show all fields
+    const allFields = availableFields.value.filter(f => f !== 'all')
+    datasets = allFields.map(field => {
+      const values = dataPoints.value.map(point => {
+        const value = point.data?.[field]
+        return parseFloat(value) || 0
+      })
+      const colors = getFieldColor(field)
+      return {
+        label: formatFieldName(field),
+        data: values,
+        borderColor: colors.border,
+        backgroundColor: colors.bg,
+        borderWidth: 2,
+        fill: false,
+        tension: 0.4,
+        pointRadius: 3,
+        pointHoverRadius: 5,
+        pointBackgroundColor: colors.border,
+        pointBorderColor: '#fff',
+        pointBorderWidth: 2
+      }
+    })
+  } else {
+    // Show single field
+    const values = getChartValues()
+    const colors = getFieldColor(selectedDataField.value)
+    datasets = [{
+      label: formatFieldName(selectedDataField.value),
+      data: values,
+      borderColor: colors.border,
+      backgroundColor: colors.bg,
+      borderWidth: 2,
+      fill: true,
+      tension: 0.4,
+      pointRadius: 4,
+      pointHoverRadius: 6,
+      pointBackgroundColor: colors.border,
+      pointBorderColor: '#fff',
+      pointBorderWidth: 2
+    }]
   }
 
   // Create new chart
@@ -131,20 +176,7 @@ const updateChart = () => {
     type: 'line',
     data: {
       labels: labels,
-      datasets: [{
-        label: formatFieldName(selectedDataField.value),
-        data: values,
-        borderColor: colors.border,
-        backgroundColor: colors.bg,
-        borderWidth: 2,
-        fill: true,
-        tension: 0.4,
-        pointRadius: 4,
-        pointHoverRadius: 6,
-        pointBackgroundColor: colors.border,
-        pointBorderColor: '#fff',
-        pointBorderWidth: 2
-      }]
+      datasets: datasets
     },
     options: {
       responsive: true,
@@ -172,7 +204,7 @@ const updateChart = () => {
           backgroundColor: 'rgba(0, 0, 0, 0.8)',
           titleColor: '#fff',
           bodyColor: '#fff',
-          borderColor: colors.border,
+          borderColor: 'rgb(156, 163, 175)',
           borderWidth: 1,
           padding: 12,
           displayColors: true,
@@ -255,7 +287,6 @@ onUnmounted(() => {
   border: 1px solid var(--border);
   border-radius: 12px;
   padding: 1.5rem;
-  animation: fadeInScale 0.4s ease;
 }
 
 .chart-header {
