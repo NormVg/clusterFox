@@ -64,10 +64,6 @@ const fetchModules = async () => {
     if (data.success && data.modules) {
       const savedPositions = await loadSavedPositions()
 
-
-  // Rebuild/validate connections after nodes update
-  generateConnections()
-  console.log('[NodeMap] Nodes loaded:', nodes.value.length, 'Connections:', nodeConnections.value.length)
       // Convert modules to nodes with saved or default positions
       nodes.value = data.modules.map((module, index) => {
         const saved = savedPositions[module.umid]
@@ -82,8 +78,9 @@ const fetchModules = async () => {
         }
       })
 
-      // Generate connections between nodes
-      generateConnections()
+      // Generate connections between nodes (includes both custom and mapping connections)
+      await generateConnections()
+      console.log('[NodeMap] Nodes loaded:', nodes.value.length, 'Connections:', nodeConnections.value.length)
     }
   } catch (error) {
     console.error('Error fetching modules:', error)
@@ -158,7 +155,8 @@ const addConnection = () => {
     console.log('[Connection] Adding:', connectionFrom.value, '→', connectionTo.value)
     nodeConnections.value.push({
       from: connectionFrom.value,
-      to: connectionTo.value
+      to: connectionTo.value,
+      type: 'custom'
     })
     saveConnections()
   }
@@ -172,8 +170,17 @@ const addConnection = () => {
 
 // Delete a connection
 const deleteConnection = (fromId, toId) => {
-  const index = nodeConnections.value.findIndex(
+  const connection = nodeConnections.value.find(
     c => (c.from === fromId && c.to === toId) || (c.from === toId && c.to === fromId)
+  )
+
+  if (connection?.type === 'mapping') {
+    console.log('[Connection] Cannot delete automatic mapping connection. Remove mapping from Cutoff Modules page.')
+    return
+  }
+
+  const index = nodeConnections.value.findIndex(
+    c => c.type === 'custom' && ((c.from === fromId && c.to === toId) || (c.from === toId && c.to === fromId))
   )
   if (index !== -1) {
     nodeConnections.value.splice(index, 1)
@@ -184,7 +191,9 @@ const deleteConnection = (fromId, toId) => {
 // Save custom connections
 const saveConnections = async () => {
   try {
-    const connections = { connections: nodeConnections.value }
+    // Only save custom connections, exclude mapping connections
+    const customConnections = nodeConnections.value.filter(c => c.type === 'custom')
+    const connections = { connections: customConnections }
     await fetch('/api/node-connections', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -209,11 +218,110 @@ const loadConnections = async () => {
   return []
 }
 
+// Load module mappings
+const loadModuleMappings = async () => {
+  try {
+    const response = await fetch('/api/module-mapping')
+    const data = await response.json()
+    if (data.success && data.mappings) {
+      return data.mappings
+    }
+  } catch (error) {
+    console.error('Error loading module mappings:', error)
+  }
+  return []
+}
+
 // Auto-generate connections based on topology mode
-// Load saved custom connections
+// Load saved custom connections and module mappings
 const generateConnections = async () => {
-  const saved = await loadConnections()
-  nodeConnections.value = saved
+  // Load custom connections
+  const customConnections = await loadConnections()
+
+  // Load module mappings
+  const mappings = await loadModuleMappings()
+
+  // Transform mappings to connections
+  const mappingConnections = mappings
+    .filter(m => {
+      const sourceExists = nodes.value.find(n => n.id === m.sourceModuleUmid)
+      const targetExists = nodes.value.find(n => n.id === m.cutoffModuleUmid)
+
+      if (!sourceExists || !targetExists) {
+        console.warn(`[NodeMap] Invalid mapping: ${m.sourceModuleUmid} → ${m.cutoffModuleUmid}. One or both modules not found.`)
+        return false
+      }
+      return true
+    })
+    .map(m => {
+      const cutoffModule = nodes.value.find(n => n.id === m.cutoffModuleUmid)
+      return {
+        from: m.sourceModuleUmid,
+        to: m.cutoffModuleUmid,
+        type: 'mapping',
+        isActive: cutoffModule?.moduleData?.cutoffActive || false
+      }
+    })
+
+  // Merge connections
+  nodeConnections.value = [
+    ...customConnections.map(c => ({ ...c, type: c.type || 'custom' })),
+    ...mappingConnections
+  ]
+
+  console.log(`[NodeMap] Connections loaded: ${customConnections.length} custom, ${mappingConnections.length} mapping`)
+}
+
+// Connection styling functions
+const getConnectionColor = (conn) => {
+  if (conn.type === 'custom') return '#94a3b8'
+  if (conn.type === 'mapping') {
+    return conn.isActive ? '#10b981' : '#3b82f6'
+  }
+  return '#94a3b8'
+}
+
+const getConnectionWidth = (conn) => {
+  if (conn.type === 'custom') return 2
+  if (conn.type === 'mapping') {
+    return conn.isActive ? 3 : 2.5
+  }
+  return 2
+}
+
+const getConnectionDashArray = (conn) => {
+  return conn.type === 'custom' ? '5,5' : 'none'
+}
+
+const getConnectionOpacity = (conn) => {
+  if (conn.type === 'custom') return 0.6
+  if (conn.type === 'mapping') {
+    return conn.isActive ? 0.9 : 0.7
+  }
+  return 0.6
+}
+
+const getConnectionClass = (conn) => {
+  const classes = ['connection-line']
+  if (conn.type === 'mapping') {
+    classes.push('connection-mapping')
+    if (conn.isActive) {
+      classes.push('connection-active')
+    }
+  }
+  return classes.join(' ')
+}
+
+const getConnectionTitle = (conn) => {
+  const from = conn.from
+  const to = conn.to
+  if (conn.type === 'custom') {
+    return `Custom connection: ${from} → ${to}`
+  }
+  if (conn.type === 'mapping') {
+    return conn.isActive ? `Active cutoff: ${from} → ${to}` : `Automatic mapping: ${from} → ${to}`
+  }
+  return `${from} → ${to}`
 }
 
 // Type icons (using text for simplicity)
@@ -478,11 +586,29 @@ const statusCounts = computed(() => {
             <polyline points="1 20 1 14 7 14" />
             <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15" />
           </svg>
-          Refresh
         </button>
-        <button class="control-btn" @click="zoomOut">−</button>
-        <button class="control-btn" @click="resetZoom">⟲</button>
-        <button class="control-btn" @click="zoomIn">+</button>
+        <button class="control-btn" @click="zoomOut" title="Zoom out">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="11" cy="11" r="8" />
+            <line x1="21" y1="21" x2="16.65" y2="16.65" />
+            <line x1="8" y1="11" x2="14" y2="11" />
+          </svg>
+        </button>
+        <button class="control-btn" @click="resetZoom" title="Reset zoom">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="10" />
+            <line x1="12" y1="8" x2="12" y2="16" />
+            <line x1="8" y1="12" x2="16" y2="12" />
+          </svg>
+        </button>
+        <button class="control-btn" @click="zoomIn" title="Zoom in">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="11" cy="11" r="8" />
+            <line x1="21" y1="21" x2="16.65" y2="16.65" />
+            <line x1="11" y1="8" x2="11" y2="14" />
+            <line x1="8" y1="11" x2="14" y2="11" />
+          </svg>
+        </button>
       </div>
     </div>
 
@@ -578,13 +704,13 @@ const statusCounts = computed(() => {
               :y1="nodes.find(n => n.id === conn.from).y + 12"
               :x2="nodes.find(n => n.id === conn.to).x + 12"
               :y2="nodes.find(n => n.id === conn.to).y + 12"
-              stroke="#94a3b8"
-              stroke-width="2"
-              stroke-dasharray="5,5"
+              :stroke="getConnectionColor(conn)"
+              :stroke-width="getConnectionWidth(conn)"
+              :stroke-dasharray="getConnectionDashArray(conn)"
               stroke-linecap="round"
-              opacity="0.6"
-              class="connection-line"
-              :title="`${conn.from} → ${conn.to}`"
+              :opacity="getConnectionOpacity(conn)"
+              :class="getConnectionClass(conn)"
+              :title="getConnectionTitle(conn)"
               @click.stop="viewMode === 'connect' ? deleteConnection(conn.from, conn.to) : null"
             />
           </g>
@@ -1044,6 +1170,30 @@ const statusCounts = computed(() => {
   opacity: 0.8 !important;
   stroke: #ef4444 !important;
   stroke-width: 3;
+}
+
+/* Mapping connection styles */
+.connection-mapping {
+  cursor: default;
+}
+
+.connection-mapping:hover {
+  opacity: 0.85 !important;
+  stroke: inherit !important;
+  stroke-width: inherit;
+}
+
+.connection-active {
+  animation: connection-pulse 2s ease-in-out infinite;
+}
+
+@keyframes connection-pulse {
+  0%, 100% {
+    opacity: 0.9;
+  }
+  50% {
+    opacity: 0.6;
+  }
 }
 
 /* Node Styles */
