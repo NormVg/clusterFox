@@ -1,32 +1,6 @@
 {
   "modules": [
     {
-      "session_id": "b5c420282a45bfe5bf36ac819b04e1f2646c014e8926cf651c643385472084a2",
-      "umid": "alcohol-mq3-001",
-      "moduleType": "alcohol-sensor",
-      "typeComponents": [
-        "alcohol",
-        "sensor"
-      ],
-      "registeredAt": "2025-11-03T16:14:18.039Z",
-      "lastSeen": "2025-11-03T21:29:34.639Z",
-      "status": "active",
-      "dataCount": 1968,
-      "sessionCreatedAt": "2025-11-03T21:29:28.473Z",
-      "triggers": {
-        "alcohol": {
-          "enabled": true,
-          "threshold": 9.5,
-          "condition": "above"
-        },
-        "sensor": {
-          "enabled": false,
-          "threshold": 0,
-          "condition": "above"
-        }
-      }
-    },
-    {
       "umid": "CUTOFF-1001",
       "name": "Cutoff Relay",
       "poolId": "POOL001",
@@ -38,54 +12,68 @@
       "sensors": [],
       "isCutoffModule": true,
       "cutoffActive": false,
-      "sessionId": "a4a6417c5581a0407cc4370e196e5a4b97844106baa5c5bb95e3f896f8898c78",
-      "registeredAt": "2025-11-03T21:17:58.172Z",
-      "lastSeen": "2025-11-03T21:18:52.549Z",
+      "sessionId": "2025626348d4415bc93779852023a1994b85b8909998667abf5ab4c3a01c0563",
+      "registeredAt": "2025-11-14T17:14:55.921Z",
+      "lastSeen": "2025-11-14T17:19:32.348Z",
       "status": "online",
       "dataCount": 0,
-      "lastTriggeredAt": "2025-11-03T21:28:39.526Z"
+      "lastTriggeredAt": "2025-11-14T17:23:34.655Z"
     },
     {
-      "session_id": "6179c2a3ed891466ead1cc13f75bde7c655dafe9c861bd15b31e95d4ebbf037a",
-      "umid": "temprature-humidity-dht11-001",
+      "session_id": "e6493959151b397813bf46d57e0ba5283287c1134d2e2de2c8a4c2d2cc93b1db",
+      "umid": "temperature-humidity-001",
       "moduleType": "temperature-humidity",
       "typeComponents": [
         "temperature",
         "humidity"
       ],
-      "registeredAt": "2025-11-03T18:00:53.250Z",
-      "lastSeen": "2025-11-03T21:28:09.731Z",
+      "registeredAt": "2025-11-14T16:19:46.876Z",
+      "lastSeen": "2025-11-14T16:28:30.627Z",
       "status": "active",
-      "dataCount": 742,
-      "sessionCreatedAt": "2025-11-03T21:27:57.431Z",
-      "triggers": {
-        "temperature": {
-          "enabled": true,
-          "threshold": 50,
-          "condition": "above"
-        },
-        "humidity": {
-          "enabled": true,
-          "threshold": 60,
-          "condition": "above"
-        }
-      }
+      "dataCount": 64,
+      "sessionCreatedAt": "2025-11-14T16:27:56.171Z"
     },
     {
-      "session_id": "5aacbc41988055d708973aa129b0671a4903d585cd8f244344509bd709f2301a",
-      "umid": "butane-mq2-001",
+      "session_id": "aa136475248cb19b69e77783326913d0fc69ed50493004682608ecdc4aabe11f",
+      "umid": "butane-001",
       "moduleType": "butane-sensor",
       "typeComponents": [
         "butane",
         "sensor"
       ],
-      "registeredAt": "2025-11-03T18:33:07.045Z",
-      "lastSeen": "2025-11-03T21:26:15.128Z",
+      "registeredAt": "2025-11-14T16:59:50.642Z",
+      "lastSeen": "2025-11-14T17:24:19.688Z",
       "status": "active",
-      "dataCount": 76,
-      "sessionCreatedAt": "2025-11-03T21:25:48.193Z",
+      "dataCount": 52,
+      "sessionCreatedAt": "2025-11-14T17:20:44.323Z",
       "triggers": {
         "butane": {
+          "enabled": true,
+          "threshold": 9,
+          "condition": "above"
+        },
+        "sensor": {
+          "enabled": false,
+          "threshold": 0,
+          "condition": "above"
+        }
+      }
+    },
+    {
+      "session_id": "02ffb49b6bd26629da17fac18e55d6de1e5ae23824961508002365ad871ed71f",
+      "umid": "alcohol-001",
+      "moduleType": "alcohol-sensor",
+      "typeComponents": [
+        "alcohol",
+        "sensor"
+      ],
+      "registeredAt": "2025-11-14T17:01:44.402Z",
+      "lastSeen": "2025-11-14T17:24:22.668Z",
+      "status": "active",
+      "dataCount": 229,
+      "sessionCreatedAt": "2025-11-14T17:14:40.619Z",
+      "triggers": {
+        "alcohol": {
           "enabled": true,
           "threshold": 9.5,
           "condition": "above"

@@ -320,9 +320,9 @@ const formatTimestamp = (ts) => {
   align-items: center;
   gap: 0.5rem;
   padding: 0.625rem 1rem;
-  background: var(--primary);
-  color: white;
-  border: none;
+  background: #000000;
+  color: #ffffff;
+  border: 1px solid #000000;
   border-radius: 0.5rem;
   font-size: 0.875rem;
   font-weight: 500;
@@ -331,7 +331,8 @@ const formatTimestamp = (ts) => {
 }
 
 .refresh-btn:hover:not(:disabled) {
-  background: var(--primary-dark);
+  background: #ffffff;
+  color: #000000;
   transform: translateY(-1px);
 }
 

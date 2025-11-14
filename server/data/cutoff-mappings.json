@@ -1,22 +1,16 @@
 {
   "mappings": [
     {
-      "sourceModuleUmid": "alcohol-mq3-001",
+      "sourceModuleUmid": "alcohol-001",
       "cutoffModuleUmid": "CUTOFF-1001",
-      "createdAt": "2025-11-03T16:50:20.957Z",
-      "updatedAt": "2025-11-03T16:50:20.957Z"
+      "createdAt": "2025-11-14T17:15:53.183Z",
+      "updatedAt": "2025-11-14T17:15:53.183Z"
     },
     {
-      "sourceModuleUmid": "butane-mq2-001",
+      "sourceModuleUmid": "butane-001",
       "cutoffModuleUmid": "CUTOFF-1001",
-      "createdAt": "2025-11-03T18:31:25.585Z",
-      "updatedAt": "2025-11-03T18:31:25.585Z"
-    },
-    {
-      "sourceModuleUmid": "temprature-humidity-dht11-001",
-      "cutoffModuleUmid": "CUTOFF-1001",
-      "createdAt": "2025-11-03T18:31:29.066Z",
-      "updatedAt": "2025-11-03T18:31:29.066Z"
+      "createdAt": "2025-11-14T17:21:50.253Z",
+      "updatedAt": "2025-11-14T17:21:50.253Z"
     }
   ]
 }

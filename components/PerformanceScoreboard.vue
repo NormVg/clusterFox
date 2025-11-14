@@ -178,7 +178,7 @@ const rankedModules = computed(() => {
     const sortedByScore = [...filtered].sort((a, b) => b.score - a.score)
     const topHalf = sortedByScore.slice(0, Math.ceil(sortedByScore.length / 2))
     const goodScoreModules = filtered.filter(m => m.score >= 70)
-    
+
     // Use whichever group is larger
     filtered = goodScoreModules.length > 0 ? goodScoreModules : topHalf
   } else if (selectedFilter.value === 'attention') {
@@ -297,14 +297,14 @@ onMounted(() => {
 }
 
 .filter-btn:hover {
-  border-color: var(--primary);
-  color: var(--primary);
+  border-color: #000000;
+  color: #000000;
 }
 
 .filter-btn.active {
-  background: var(--primary);
-  color: white;
-  border-color: var(--primary);
+  background: #000000;
+  color: #ffffff;
+  border-color: #000000;
 }
 
 .loading-state,
@@ -592,7 +592,7 @@ onMounted(() => {
     grid-template-columns: 50px minmax(120px, 1fr) 150px 80px 80px 80px;
     gap: 0.75rem;
   }
-  
+
   .table-header,
   .table-body {
     min-width: 600px;
@@ -603,21 +603,21 @@ onMounted(() => {
   .performance-scoreboard {
     padding: 1rem;
   }
-  
+
   .header {
     flex-direction: column;
     align-items: stretch;
   }
-  
+
   .filter-buttons {
     width: 100%;
     justify-content: stretch;
   }
-  
+
   .filter-btn {
     flex: 1;
   }
-  
+
   .summary-stats {
     grid-template-columns: 1fr;
   }
@@ -625,14 +625,14 @@ onMounted(() => {
   .scoreboard-table {
     border-radius: 0.375rem;
   }
-  
+
   .table-header,
   .table-row {
     grid-template-columns: 40px minmax(100px, 1fr) 80px;
     gap: 0.5rem;
     padding: 0.75rem 0.5rem;
   }
-  
+
   .table-header,
   .table-body {
     min-width: 300px;

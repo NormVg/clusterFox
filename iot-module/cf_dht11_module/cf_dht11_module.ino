@@ -64,7 +64,7 @@ void connectWiFi() {
   WiFi.mode(WIFI_STA);
   WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
   unsigned long start = millis();
-  
+
   // WiFi connection blinking pattern - LED OFF during connection
   while (WiFi.status() != WL_CONNECTED && millis() - start < 20000) {
     digitalWrite(STATUS_LED_PIN, LOW);
@@ -72,7 +72,7 @@ void connectWiFi() {
     digitalWrite(STATUS_LED_PIN, HIGH);
     delay(100);
   }
-  
+
   // LED OFF for 1 second when connected
   if (WiFi.status() == WL_CONNECTED) {
     digitalWrite(STATUS_LED_PIN, LOW);
@@ -108,27 +108,27 @@ bool sendSensorData(float temperature, float humidity) {
   JsonObject data = doc.createNestedObject("data");
   data["temperature"] = temperature;
   data["humidity"] = humidity;
-  
+
   String body;
   serializeJson(doc, body);
   bool result = httpPostJson(BASE_URL + "/api/pool", body, nullptr);
-  
+
   // Turn LED OFF briefly after sending data
   digitalWrite(STATUS_LED_PIN, LOW);
   delay(50);
   digitalWrite(STATUS_LED_PIN, HIGH);
-  
+
   return result;
 }
 
 void setup() {
   Serial.begin(115200);
   Serial.println("\n\n=== ClusterFox DHT11 Module ===");
-  
+
   // Setup pins
   pinMode(STATUS_LED_PIN, OUTPUT);
   digitalWrite(STATUS_LED_PIN, HIGH); // LED ON when idle
-  
+
   // Initialize DHT sensor
   dht.begin();
 
@@ -143,7 +143,7 @@ void setup() {
 
   // Register with server
   registerModule();
-  
+
   // Turn LED back ON after operations
   digitalWrite(STATUS_LED_PIN, HIGH);
 }
@@ -169,5 +169,6 @@ void loop() {
 
   delay(50);
 }
+
 
 

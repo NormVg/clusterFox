@@ -11,6 +11,9 @@
         ],
         "clean": [
             "rm -rf node_modules"
+        ],
+        "sim": [
+
         ]
     },
     "template": {
