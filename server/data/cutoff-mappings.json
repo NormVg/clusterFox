@@ -11,6 +11,12 @@
       "cutoffModuleUmid": "CUTOFF-1001",
       "createdAt": "2025-11-14T17:21:50.253Z",
       "updatedAt": "2025-11-14T17:21:50.253Z"
+    },
+    {
+      "sourceModuleUmid": "temperature-humidity-001",
+      "cutoffModuleUmid": "CUTOFF-1001",
+      "createdAt": "2025-11-15T18:40:26.067Z",
+      "updatedAt": "2025-11-15T18:40:26.067Z"
     }
   ]
 }

@@ -97,6 +97,7 @@ const isDraggingMap = ref(false)
 const mapOffset = ref({ x: 0, y: 0 })
 const dragStart = ref({ x: 0, y: 0 })
 const mapScale = ref(1)
+const gridSize = ref(50) // Grid size in pixels (matches CSS background-size)
 
 // UI state
 const showAddNodeForm = ref(false)
@@ -358,6 +359,14 @@ const startMapDrag = (event) => {
   }
 }
 
+// Grid snapping helper - centers nodes on grid intersections
+const snapToGrid = (value) => {
+  const nodeSize = 24 // Node core size in pixels
+  const offset = nodeSize / 2 // Center offset
+  // Snap to grid intersection and offset back by half node size
+  return Math.round((value + offset) / gridSize.value) * gridSize.value - offset
+}
+
 // Mouse move handler
 const handleMouseMove = (event) => {
   if (draggingNode.value) {
@@ -365,6 +374,7 @@ const handleMouseMove = (event) => {
     const newX = (event.clientX - rect.left - mapOffset.value.x) / mapScale.value - dragStart.value.x
     const newY = (event.clientY - rect.top - mapOffset.value.y) / mapScale.value - dragStart.value.y
 
+    // Update position without snapping during drag for smooth movement
     draggingNode.value.x = Math.max(0, Math.min(5000, newX))
     draggingNode.value.y = Math.max(0, Math.min(5000, newY))
 
@@ -380,6 +390,10 @@ const handleMouseMove = (event) => {
 // Mouse up handler
 const handleMouseUp = () => {
   if (draggingNode.value) {
+    // Snap to grid when releasing the node (centers on grid intersections)
+    draggingNode.value.x = snapToGrid(draggingNode.value.x)
+    draggingNode.value.y = snapToGrid(draggingNode.value.y)
+
     // Save positions when done dragging
     savePositions()
   // Connections depend on node positions; recompute lines
@@ -1133,6 +1147,7 @@ const statusCounts = computed(() => {
 
 /* Grid Background */
 .map-grid {
+  --grid-size: 50px;
   position: absolute;
   width: 100%;
   height: 100%;
@@ -1140,9 +1155,9 @@ const statusCounts = computed(() => {
   left: 0;
   background-color: var(--bg);
   background-image:
-    repeating-linear-gradient(0deg, rgba(255, 255, 255, 0.05) 0px, rgba(255, 255, 255, 0.05) 1px, transparent 1px, transparent 50px),
-    repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.05) 0px, rgba(255, 255, 255, 0.05) 1px, transparent 1px, transparent 50px);
-  background-size: 50px 50px;
+    repeating-linear-gradient(0deg, rgba(255, 255, 255, 0.05) 0px, rgba(255, 255, 255, 0.05) 1px, transparent 1px, transparent var(--grid-size)),
+    repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.05) 0px, rgba(255, 255, 255, 0.05) 1px, transparent 1px, transparent var(--grid-size));
+  background-size: var(--grid-size) var(--grid-size);
   pointer-events: none;
 }
 

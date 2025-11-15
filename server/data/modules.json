@@ -12,15 +12,15 @@
       "sensors": [],
       "isCutoffModule": true,
       "cutoffActive": false,
-      "sessionId": "2025626348d4415bc93779852023a1994b85b8909998667abf5ab4c3a01c0563",
-      "registeredAt": "2025-11-14T17:14:55.921Z",
-      "lastSeen": "2025-11-14T17:19:32.348Z",
+      "sessionId": "92e4441e83606379fb8ea08c1720553f869f6f5a8a0d40e902f352e3c780d791",
+      "registeredAt": "2025-11-15T20:33:10.629Z",
+      "lastSeen": "2025-11-15T20:36:01.025Z",
       "status": "online",
       "dataCount": 0,
-      "lastTriggeredAt": "2025-11-14T17:23:34.655Z"
+      "lastTriggeredAt": "2025-11-15T20:51:42.281Z"
     },
     {
-      "session_id": "312403fb2cdec881cdda5be6aa0bc198a9780bfc250bf4ff57a1114992bb164e",
+      "session_id": "8f8e9c6e364f4068af29b77aba56a9f11a0e2865b349ccd80b6bb5a6fbe4d399",
       "umid": "temperature-humidity-001",
       "moduleType": "temperature-humidity",
       "typeComponents": [
@@ -28,13 +28,25 @@
         "humidity"
       ],
       "registeredAt": "2025-11-14T16:19:46.876Z",
-      "lastSeen": "2025-11-14T18:23:53.780Z",
+      "lastSeen": "2025-11-15T20:54:40.775Z",
       "status": "active",
-      "dataCount": 1063,
-      "sessionCreatedAt": "2025-11-14T17:50:36.646Z"
+      "dataCount": 2319,
+      "sessionCreatedAt": "2025-11-15T20:45:18.554Z",
+      "triggers": {
+        "temperature": {
+          "enabled": true,
+          "threshold": 90,
+          "condition": "above"
+        },
+        "humidity": {
+          "enabled": true,
+          "threshold": 80,
+          "condition": "above"
+        }
+      }
     },
     {
-      "session_id": "aa136475248cb19b69e77783326913d0fc69ed50493004682608ecdc4aabe11f",
+      "session_id": "f8c5691b6f11f231d38e703e9df579db94d5f517c8e91d005b74922cc1c2707f",
       "umid": "butane-001",
       "moduleType": "butane-sensor",
       "typeComponents": [
@@ -42,10 +54,10 @@
         "sensor"
       ],
       "registeredAt": "2025-11-14T16:59:50.642Z",
-      "lastSeen": "2025-11-14T17:24:19.688Z",
+      "lastSeen": "2025-11-15T20:54:39.760Z",
       "status": "active",
-      "dataCount": 52,
-      "sessionCreatedAt": "2025-11-14T17:20:44.323Z",
+      "dataCount": 533,
+      "sessionCreatedAt": "2025-11-15T20:44:39.585Z",
       "triggers": {
         "butane": {
           "enabled": true,
@@ -60,7 +72,7 @@
       }
     },
     {
-      "session_id": "bcb034a117c46790bbca4a9590f66eb6f50946558cda0b11db4a77c1f59392ac",
+      "session_id": "fbe4e1af2f5c2de83e5b361323b5a89eac6d33ddd2b1ccce6d087f65aa089959",
       "umid": "alcohol-001",
       "moduleType": "alcohol-sensor",
       "typeComponents": [
@@ -68,14 +80,14 @@
         "sensor"
       ],
       "registeredAt": "2025-11-14T17:01:44.402Z",
-      "lastSeen": "2025-11-14T18:23:50.954Z",
+      "lastSeen": "2025-11-15T20:54:39.072Z",
       "status": "active",
-      "dataCount": 905,
-      "sessionCreatedAt": "2025-11-14T17:50:05.519Z",
+      "dataCount": 1670,
+      "sessionCreatedAt": "2025-11-15T20:51:14.809Z",
       "triggers": {
         "alcohol": {
           "enabled": true,
-          "threshold": 9.5,
+          "threshold": 9,
           "condition": "above"
         },
         "sensor": {

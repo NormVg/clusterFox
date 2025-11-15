@@ -246,5 +246,241 @@
     "eventType": "emergency_ended",
     "count": 0,
     "modules": []
+  },
+  {
+    "timestamp": "2025-11-15T18:42:23.582Z",
+    "eventType": "emergency_started",
+    "count": 1,
+    "modules": [
+      {
+        "umid": "butane-001",
+        "moduleType": "butane-sensor",
+        "dataTimestamp": "2025-11-15T18:42:21.929Z",
+        "triggeredCount": 1
+      }
+    ]
+  },
+  {
+    "timestamp": "2025-11-15T18:42:37.558Z",
+    "eventType": "emergency_ended",
+    "count": 0,
+    "modules": []
+  },
+  {
+    "timestamp": "2025-11-15T18:42:53.618Z",
+    "eventType": "emergency_started",
+    "count": 1,
+    "modules": [
+      {
+        "umid": "butane-001",
+        "moduleType": "butane-sensor",
+        "dataTimestamp": "2025-11-15T18:42:51.951Z",
+        "triggeredCount": 1
+      }
+    ]
+  },
+  {
+    "timestamp": "2025-11-15T18:43:03.643Z",
+    "eventType": "emergency_ended",
+    "count": 0,
+    "modules": []
+  },
+  {
+    "timestamp": "2025-11-15T18:43:51.669Z",
+    "eventType": "emergency_started",
+    "count": 1,
+    "modules": [
+      {
+        "umid": "alcohol-001",
+        "moduleType": "alcohol-sensor",
+        "dataTimestamp": "2025-11-15T18:43:48.929Z",
+        "triggeredCount": 1
+      }
+    ]
+  },
+  {
+    "timestamp": "2025-11-15T18:44:01.669Z",
+    "eventType": "emergency_ended",
+    "count": 0,
+    "modules": []
+  },
+  {
+    "timestamp": "2025-11-15T18:44:34.807Z",
+    "eventType": "emergency_started",
+    "count": 1,
+    "modules": [
+      {
+        "umid": "alcohol-001",
+        "moduleType": "alcohol-sensor",
+        "dataTimestamp": "2025-11-15T18:44:33.732Z",
+        "triggeredCount": 1
+      }
+    ]
+  },
+  {
+    "timestamp": "2025-11-15T18:44:52.960Z",
+    "eventType": "emergency_ended",
+    "count": 0,
+    "modules": []
+  },
+  {
+    "timestamp": "2025-11-15T18:44:58.977Z",
+    "eventType": "emergency_started",
+    "count": 1,
+    "modules": [
+      {
+        "umid": "butane-001",
+        "moduleType": "butane-sensor",
+        "dataTimestamp": "2025-11-15T18:44:57.109Z",
+        "triggeredCount": 1
+      }
+    ]
+  },
+  {
+    "timestamp": "2025-11-15T18:45:03.007Z",
+    "eventType": "emergency_ended",
+    "count": 0,
+    "modules": []
+  },
+  {
+    "timestamp": "2025-11-15T18:45:44.248Z",
+    "eventType": "emergency_started",
+    "count": 1,
+    "modules": [
+      {
+        "umid": "butane-001",
+        "moduleType": "butane-sensor",
+        "dataTimestamp": "2025-11-15T18:45:41.943Z",
+        "triggeredCount": 1
+      }
+    ]
+  },
+  {
+    "timestamp": "2025-11-15T18:45:46.059Z",
+    "eventType": "update",
+    "count": 1,
+    "modules": [
+      {
+        "umid": "butane-001",
+        "moduleType": "butane-sensor",
+        "dataTimestamp": "2025-11-15T18:45:41.943Z",
+        "triggeredCount": 1
+      }
+    ]
+  },
+  {
+    "timestamp": "2025-11-15T18:54:51.944Z",
+    "eventType": "emergency_changed",
+    "count": 1,
+    "modules": [
+      {
+        "umid": "alcohol-001",
+        "moduleType": "alcohol-sensor",
+        "dataTimestamp": "2025-11-15T18:54:51.803Z",
+        "triggeredCount": 1
+      }
+    ]
+  },
+  {
+    "timestamp": "2025-11-15T18:54:57.932Z",
+    "eventType": "emergency_ended",
+    "count": 0,
+    "modules": []
+  },
+  {
+    "timestamp": "2025-11-15T18:59:02.727Z",
+    "eventType": "emergency_started",
+    "count": 1,
+    "modules": [
+      {
+        "umid": "alcohol-001",
+        "moduleType": "alcohol-sensor",
+        "dataTimestamp": "2025-11-15T18:59:00.834Z",
+        "triggeredCount": 1
+      }
+    ]
+  },
+  {
+    "timestamp": "2025-11-15T19:04:32.599Z",
+    "eventType": "update",
+    "count": 1,
+    "modules": [
+      {
+        "umid": "alcohol-001",
+        "moduleType": "alcohol-sensor",
+        "dataTimestamp": "2025-11-15T19:04:30.966Z",
+        "triggeredCount": 1
+      }
+    ]
+  },
+  {
+    "timestamp": "2025-11-15T19:04:44.650Z",
+    "eventType": "emergency_ended",
+    "count": 0,
+    "modules": []
+  },
+  {
+    "timestamp": "2025-11-15T19:06:53.476Z",
+    "eventType": "emergency_started",
+    "count": 1,
+    "modules": [
+      {
+        "umid": "alcohol-001",
+        "moduleType": "alcohol-sensor",
+        "dataTimestamp": "2025-11-15T19:06:51.818Z",
+        "triggeredCount": 1
+      }
+    ]
+  },
+  {
+    "timestamp": "2025-11-15T19:06:56.099Z",
+    "eventType": "update",
+    "count": 1,
+    "modules": [
+      {
+        "umid": "alcohol-001",
+        "moduleType": "alcohol-sensor",
+        "dataTimestamp": "2025-11-15T19:06:54.813Z",
+        "triggeredCount": 1
+      }
+    ]
+  },
+  {
+    "timestamp": "2025-11-15T19:07:06.031Z",
+    "eventType": "update",
+    "count": 1,
+    "modules": [
+      {
+        "umid": "alcohol-001",
+        "moduleType": "alcohol-sensor",
+        "dataTimestamp": "2025-11-15T19:07:00.813Z",
+        "triggeredCount": 1
+      }
+    ]
+  },
+  {
+    "timestamp": "2025-11-15T19:07:08.052Z",
+    "eventType": "emergency_ended",
+    "count": 0,
+    "modules": []
+  },
+  {
+    "timestamp": "2025-11-15T20:51:42.893Z",
+    "eventType": "emergency_started",
+    "count": 1,
+    "modules": [
+      {
+        "umid": "alcohol-001",
+        "moduleType": "alcohol-sensor",
+        "dataTimestamp": "2025-11-15T20:51:42.235Z",
+        "triggeredCount": 1
+      }
+    ]
+  },
+  {
+    "timestamp": "2025-11-15T20:52:18.729Z",
+    "eventType": "emergency_ended",
+    "count": 0,
+    "modules": []
   }
 ]

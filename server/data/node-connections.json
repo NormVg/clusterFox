@@ -1,18 +1,13 @@
 {
   "connections": [
     {
-      "from": "alcohol-mq3-001",
-      "to": "butane-mq2-001",
-      "type": "custom"
-    },
-    {
-      "from": "butane-mq2-001",
-      "to": "temprature-humidity-dht11-001",
-      "type": "custom"
-    },
-    {
       "from": "temperature-humidity-001",
       "to": "butane-001",
+      "type": "custom"
+    },
+    {
+      "from": "butane-001",
+      "to": "alcohol-001",
       "type": "custom"
     }
   ]
