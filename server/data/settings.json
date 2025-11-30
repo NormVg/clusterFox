@@ -6,7 +6,7 @@
   "enableNotifications": true,
   "enableAutoRefresh": true,
   "theme": "dark",
-  "sidebarCollapsed": false,
+  "sidebarCollapsed": true,
   "moduleActiveThreshold": 30,
   "moduleInactiveThreshold": 60,
   "enableEmergencyTriggers": true,

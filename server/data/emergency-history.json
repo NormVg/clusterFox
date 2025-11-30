@@ -482,5 +482,241 @@
     "eventType": "emergency_ended",
     "count": 0,
     "modules": []
+  },
+  {
+    "timestamp": "2025-11-15T21:04:50.538Z",
+    "eventType": "emergency_started",
+    "count": 1,
+    "modules": [
+      {
+        "umid": "butane-001",
+        "moduleType": "butane-sensor",
+        "dataTimestamp": "2025-11-15T21:04:49.766Z",
+        "triggeredCount": 1
+      }
+    ]
+  },
+  {
+    "timestamp": "2025-11-15T21:04:56.567Z",
+    "eventType": "emergency_ended",
+    "count": 0,
+    "modules": []
+  },
+  {
+    "timestamp": "2025-11-15T22:23:23.160Z",
+    "eventType": "emergency_started",
+    "count": 1,
+    "modules": [
+      {
+        "umid": "temperature-humidity-001",
+        "moduleType": "temperature-humidity",
+        "dataTimestamp": "2025-11-15T22:23:21.398Z",
+        "triggeredCount": 1
+      }
+    ]
+  },
+  {
+    "timestamp": "2025-11-15T22:24:30.679Z",
+    "eventType": "update",
+    "count": 1,
+    "modules": [
+      {
+        "umid": "temperature-humidity-001",
+        "moduleType": "temperature-humidity",
+        "dataTimestamp": "2025-11-15T22:24:29.395Z",
+        "triggeredCount": 1
+      }
+    ]
+  },
+  {
+    "timestamp": "2025-11-15T22:24:45.333Z",
+    "eventType": "update",
+    "count": 1,
+    "modules": [
+      {
+        "umid": "temperature-humidity-001",
+        "moduleType": "temperature-humidity",
+        "dataTimestamp": "2025-11-15T22:24:45.270Z",
+        "triggeredCount": 1
+      }
+    ]
+  },
+  {
+    "timestamp": "2025-11-15T22:25:27.542Z",
+    "eventType": "emergency_ended",
+    "count": 0,
+    "modules": []
+  },
+  {
+    "timestamp": "2025-11-16T09:28:24.614Z",
+    "eventType": "emergency_started",
+    "count": 1,
+    "modules": [
+      {
+        "umid": "butane-001",
+        "moduleType": "butane-sensor",
+        "dataTimestamp": "2025-11-16T09:28:23.344Z",
+        "triggeredCount": 1
+      }
+    ]
+  },
+  {
+    "timestamp": "2025-11-16T09:28:28.649Z",
+    "eventType": "emergency_ended",
+    "count": 0,
+    "modules": []
+  },
+  {
+    "timestamp": "2025-11-16T09:28:44.797Z",
+    "eventType": "emergency_started",
+    "count": 1,
+    "modules": [
+      {
+        "umid": "butane-001",
+        "moduleType": "butane-sensor",
+        "dataTimestamp": "2025-11-16T09:28:43.383Z",
+        "triggeredCount": 1
+      }
+    ]
+  },
+  {
+    "timestamp": "2025-11-16T09:28:50.826Z",
+    "eventType": "emergency_ended",
+    "count": 0,
+    "modules": []
+  },
+  {
+    "timestamp": "2025-11-16T09:30:30.572Z",
+    "eventType": "emergency_started",
+    "count": 1,
+    "modules": [
+      {
+        "umid": "alcohol-001",
+        "moduleType": "alcohol-sensor",
+        "dataTimestamp": "2025-11-16T09:30:28.952Z",
+        "triggeredCount": 1
+      }
+    ]
+  },
+  {
+    "timestamp": "2025-11-16T09:30:50.734Z",
+    "eventType": "emergency_ended",
+    "count": 0,
+    "modules": []
+  },
+  {
+    "timestamp": "2025-11-16T09:41:49.758Z",
+    "eventType": "emergency_started",
+    "count": 1,
+    "modules": [
+      {
+        "umid": "alcohol-001",
+        "moduleType": "alcohol-sensor",
+        "dataTimestamp": "2025-11-16T09:41:47.308Z",
+        "triggeredCount": 1
+      }
+    ]
+  },
+  {
+    "timestamp": "2025-11-16T09:42:09.288Z",
+    "eventType": "emergency_ended",
+    "count": 0,
+    "modules": []
+  },
+  {
+    "timestamp": "2025-11-16T09:44:39.255Z",
+    "eventType": "emergency_started",
+    "count": 1,
+    "modules": [
+      {
+        "umid": "butane-001",
+        "moduleType": "butane-sensor",
+        "dataTimestamp": "2025-11-16T09:44:36.748Z",
+        "triggeredCount": 1
+      }
+    ]
+  },
+  {
+    "timestamp": "2025-11-16T09:44:42.581Z",
+    "eventType": "emergency_ended",
+    "count": 0,
+    "modules": []
+  },
+  {
+    "timestamp": "2025-11-16T09:45:43.781Z",
+    "eventType": "emergency_started",
+    "count": 1,
+    "modules": [
+      {
+        "umid": "temperature-humidity-001",
+        "moduleType": "temperature-humidity",
+        "dataTimestamp": "2025-11-16T09:45:42.807Z",
+        "triggeredCount": 1
+      }
+    ]
+  },
+  {
+    "timestamp": "2025-11-16T09:45:44.725Z",
+    "eventType": "update",
+    "count": 1,
+    "modules": [
+      {
+        "umid": "temperature-humidity-001",
+        "moduleType": "temperature-humidity",
+        "dataTimestamp": "2025-11-16T09:45:42.807Z",
+        "triggeredCount": 1
+      }
+    ]
+  },
+  {
+    "timestamp": "2025-11-16T09:46:12.905Z",
+    "eventType": "emergency_ended",
+    "count": 0,
+    "modules": []
+  },
+  {
+    "timestamp": "2025-11-16T10:14:04.936Z",
+    "eventType": "emergency_started",
+    "count": 1,
+    "modules": [
+      {
+        "umid": "alcohol-001",
+        "moduleType": "alcohol-sensor",
+        "dataTimestamp": "2025-11-16T10:14:03.432Z",
+        "triggeredCount": 1
+      }
+    ]
+  },
+  {
+    "timestamp": "2025-11-16T10:51:35.436Z",
+    "eventType": "update",
+    "count": 1,
+    "modules": [
+      {
+        "umid": "alcohol-001",
+        "moduleType": "alcohol-sensor",
+        "dataTimestamp": "2025-11-16T10:51:35.115Z",
+        "triggeredCount": 1
+      }
+    ]
+  },
+  {
+    "timestamp": "2025-11-16T10:52:01.497Z",
+    "eventType": "emergency_ended",
+    "count": 0,
+    "modules": []
+  },
+  {
+    "timestamp": "2025-11-18T16:37:27.428Z",
+    "eventType": "emergency_started",
+    "count": 1,
+    "modules": [
+      {
+        "umid": "alcohol-001",
+        "moduleType": "alcohol-sensor",
+        "dataTimestamp": "2025-11-18T16:37:26.637Z",
+        "triggeredCount": 1
+      }
+    ]
   }
 ]

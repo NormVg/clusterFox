@@ -1,14 +1,18 @@
 {
   "daily": {
-    "2025-11-03": {
+    "2025-11-15": {
       "requests": 1,
-      "tokens": 720
+      "tokens": 493
+    },
+    "2025-11-16": {
+      "requests": 1,
+      "tokens": 583
     }
   },
   "minute": [
     {
-      "timestamp": 1762194961667,
-      "tokens": 720
+      "timestamp": 1763288189640,
+      "tokens": 583
     }
   ]
 }

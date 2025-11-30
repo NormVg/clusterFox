@@ -16,6 +16,9 @@ console.log('📄 Logs file:', LOGS_FILE)
 // Maximum number of logs to keep (FIFO)
 const MAX_LOGS = 10000
 
+// Simple mutex for file operations
+let writeQueue = Promise.resolve()
+
 /**
  * Initialize the log file if it doesn't exist
  */
@@ -57,62 +60,70 @@ export async function readLogs() {
  * @returns {Promise<Object>} The created log entry with ID and timestamp
  */
 export async function appendLog(logEntry) {
-  try {
-    await initializeLogFile()
+  // Queue the write operation to prevent race conditions
+  return new Promise((resolve, reject) => {
+    writeQueue = writeQueue.then(async () => {
+      try {
+        await initializeLogFile()
 
-    // Read existing logs
-    const data = await fs.readFile(LOGS_FILE, 'utf-8')
-    const parsed = JSON.parse(data)
-    const logs = parsed.logs || []
-    const metadata = parsed.metadata || { created: new Date().toISOString(), totalCount: 0 }
+        // Read existing logs
+        const data = await fs.readFile(LOGS_FILE, 'utf-8')
+        const parsed = JSON.parse(data)
+        const logs = parsed.logs || []
+        const metadata = parsed.metadata || { created: new Date().toISOString(), totalCount: 0 }
 
-    // Check for duplicate log in last 5 seconds (prevents rapid duplicate logging)
-    const fiveSecondsAgo = Date.now() - 5000
-    const isDuplicate = logs.some(log => {
-      const logTime = new Date(log.createdAt).getTime()
-      return (
-        log.message === logEntry.message &&
-        log.type === logEntry.type &&
-        logTime > fiveSecondsAgo
-      )
+        // Check for duplicate log in last 5 seconds (prevents rapid duplicate logging)
+        const fiveSecondsAgo = Date.now() - 5000
+        const isDuplicate = logs.some(log => {
+          const logTime = new Date(log.createdAt).getTime()
+          return (
+            log.message === logEntry.message &&
+            log.type === logEntry.type &&
+            logTime > fiveSecondsAgo
+          )
+        })
+
+        if (isDuplicate) {
+          console.log('⚠️ Skipping duplicate log:', logEntry.message)
+          resolve(null)
+          return
+        }
+
+        // Create new log entry with ID and timestamp
+        const newLog = {
+          id: metadata.totalCount + 1,
+          type: logEntry.type || 'info',
+          message: logEntry.message,
+          timestamp: new Date().toLocaleTimeString('en-US', { hour12: false }),
+          createdAt: new Date().toISOString(),
+          details: logEntry.details || null,
+          rawData: logEntry.rawData || null
+        }
+
+        // Add to beginning of array (newest first)
+        logs.unshift(newLog)
+
+        // Trim logs if exceeds max
+        if (logs.length > MAX_LOGS) {
+          logs.splice(MAX_LOGS)
+        }
+
+        // Update metadata
+        metadata.totalCount += 1
+        metadata.lastUpdated = new Date().toISOString()
+
+        // Write back to file atomically
+        const tempFile = LOGS_FILE + '.tmp'
+        await fs.writeFile(tempFile, JSON.stringify({ logs, metadata }, null, 2))
+        await fs.rename(tempFile, LOGS_FILE)
+
+        resolve(newLog)
+      } catch (error) {
+        console.error('Error appending log:', error)
+        reject(error)
+      }
     })
-
-    if (isDuplicate) {
-      console.log('⚠️ Skipping duplicate log:', logEntry.message)
-      return null
-    }
-
-    // Create new log entry with ID and timestamp
-    const newLog = {
-      id: metadata.totalCount + 1,
-      type: logEntry.type || 'info',
-      message: logEntry.message,
-      timestamp: new Date().toLocaleTimeString('en-US', { hour12: false }),
-      createdAt: new Date().toISOString(),
-      details: logEntry.details || null,
-      rawData: logEntry.rawData || null
-    }
-
-    // Add to beginning of array (newest first)
-    logs.unshift(newLog)
-
-    // Trim logs if exceeds max
-    if (logs.length > MAX_LOGS) {
-      logs.splice(MAX_LOGS)
-    }
-
-    // Update metadata
-    metadata.totalCount += 1
-    metadata.lastUpdated = new Date().toISOString()
-
-    // Write back to file
-    await fs.writeFile(LOGS_FILE, JSON.stringify({ logs, metadata }, null, 2))
-
-    return newLog
-  } catch (error) {
-    console.error('Error appending log:', error)
-    throw error
-  }
+  })
 }
 
 /**
@@ -121,51 +132,58 @@ export async function appendLog(logEntry) {
  * @returns {Promise<Array>} Array of created log entries
  */
 export async function appendLogs(logEntries) {
-  try {
-    await initializeLogFile()
+  // Queue the write operation to prevent race conditions
+  return new Promise((resolve, reject) => {
+    writeQueue = writeQueue.then(async () => {
+      try {
+        await initializeLogFile()
 
-    // Read existing logs
-    const data = await fs.readFile(LOGS_FILE, 'utf-8')
-    const parsed = JSON.parse(data)
-    const logs = parsed.logs || []
-    const metadata = parsed.metadata || { created: new Date().toISOString(), totalCount: 0 }
+        // Read existing logs
+        const data = await fs.readFile(LOGS_FILE, 'utf-8')
+        const parsed = JSON.parse(data)
+        const logs = parsed.logs || []
+        const metadata = parsed.metadata || { created: new Date().toISOString(), totalCount: 0 }
 
-    const newLogs = []
+        const newLogs = []
 
-    // Create new log entries
-    for (const logEntry of logEntries) {
-      const newLog = {
-        id: metadata.totalCount + newLogs.length + 1,
-        type: logEntry.type || 'info',
-        message: logEntry.message,
-        timestamp: new Date().toLocaleTimeString('en-US', { hour12: false }),
-        createdAt: new Date().toISOString(),
-        details: logEntry.details || null,
-        rawData: logEntry.rawData || null
+        // Create new log entries
+        for (const logEntry of logEntries) {
+          const newLog = {
+            id: metadata.totalCount + newLogs.length + 1,
+            type: logEntry.type || 'info',
+            message: logEntry.message,
+            timestamp: new Date().toLocaleTimeString('en-US', { hour12: false }),
+            createdAt: new Date().toISOString(),
+            details: logEntry.details || null,
+            rawData: logEntry.rawData || null
+          }
+          newLogs.push(newLog)
+        }
+
+        // Add to beginning of array (newest first)
+        logs.unshift(...newLogs)
+
+        // Trim logs if exceeds max
+        if (logs.length > MAX_LOGS) {
+          logs.splice(MAX_LOGS)
+        }
+
+        // Update metadata
+        metadata.totalCount += newLogs.length
+        metadata.lastUpdated = new Date().toISOString()
+
+        // Write back to file atomically
+        const tempFile = LOGS_FILE + '.tmp'
+        await fs.writeFile(tempFile, JSON.stringify({ logs, metadata }, null, 2))
+        await fs.rename(tempFile, LOGS_FILE)
+
+        resolve(newLogs)
+      } catch (error) {
+        console.error('Error appending logs:', error)
+        reject(error)
       }
-      newLogs.push(newLog)
-    }
-
-    // Add to beginning of array (newest first)
-    logs.unshift(...newLogs)
-
-    // Trim logs if exceeds max
-    if (logs.length > MAX_LOGS) {
-      logs.splice(MAX_LOGS)
-    }
-
-    // Update metadata
-    metadata.totalCount += newLogs.length
-    metadata.lastUpdated = new Date().toISOString()
-
-    // Write back to file
-    await fs.writeFile(LOGS_FILE, JSON.stringify({ logs, metadata }, null, 2))
-
-    return newLogs
-  } catch (error) {
-    console.error('Error appending logs:', error)
-    throw error
-  }
+    })
+  })
 }
 
 /**
@@ -173,19 +191,27 @@ export async function appendLogs(logEntries) {
  * @returns {Promise<void>}
  */
 export async function clearLogs() {
-  try {
-    await fs.writeFile(LOGS_FILE, JSON.stringify({
-      logs: [],
-      metadata: {
-        created: new Date().toISOString(),
-        totalCount: 0,
-        lastCleared: new Date().toISOString()
+  // Queue the write operation to prevent race conditions
+  return new Promise((resolve, reject) => {
+    writeQueue = writeQueue.then(async () => {
+      try {
+        const tempFile = LOGS_FILE + '.tmp'
+        await fs.writeFile(tempFile, JSON.stringify({
+          logs: [],
+          metadata: {
+            created: new Date().toISOString(),
+            totalCount: 0,
+            lastCleared: new Date().toISOString()
+          }
+        }, null, 2))
+        await fs.rename(tempFile, LOGS_FILE)
+        resolve()
+      } catch (error) {
+        console.error('Error clearing logs:', error)
+        reject(error)
       }
-    }, null, 2))
-  } catch (error) {
-    console.error('Error clearing logs:', error)
-    throw error
-  }
+    })
+  })
 }
 
 /**

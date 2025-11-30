@@ -114,23 +114,31 @@ export function useRealtimeChart() {
     })
   }
 
-  // Get color scheme based on field name
+  // Distinct color palette for different fields
+  const colorPalette = [
+    { bg: 'rgba(59, 130, 246, 0.1)', border: 'rgb(59, 130, 246)' },      // Blue
+    { bg: 'rgba(34, 197, 94, 0.1)', border: 'rgb(34, 197, 94)' },        // Green
+    { bg: 'rgba(239, 68, 68, 0.1)', border: 'rgb(239, 68, 68)' },        // Red
+    { bg: 'rgba(251, 191, 36, 0.1)', border: 'rgb(251, 191, 36)' },      // Yellow
+    { bg: 'rgba(168, 85, 247, 0.1)', border: 'rgb(168, 85, 247)' },      // Purple
+    { bg: 'rgba(236, 72, 153, 0.1)', border: 'rgb(236, 72, 153)' },      // Pink
+    { bg: 'rgba(20, 184, 166, 0.1)', border: 'rgb(20, 184, 166)' },      // Teal
+    { bg: 'rgba(249, 115, 22, 0.1)', border: 'rgb(249, 115, 22)' },      // Orange
+    { bg: 'rgba(139, 92, 246, 0.1)', border: 'rgb(139, 92, 246)' },      // Indigo
+    { bg: 'rgba(14, 165, 233, 0.1)', border: 'rgb(14, 165, 233)' },      // Sky
+    { bg: 'rgba(132, 204, 22, 0.1)', border: 'rgb(132, 204, 22)' },      // Lime
+    { bg: 'rgba(244, 63, 94, 0.1)', border: 'rgb(244, 63, 94)' }         // Rose
+  ]
+
+  // Get color scheme based on field name - assign unique colors
   const getFieldColor = (fieldName) => {
-    const colors = {
-      temp: { bg: 'rgba(59, 130, 246, 0.1)', border: 'rgb(59, 130, 246)' },
-      temperature: { bg: 'rgba(59, 130, 246, 0.1)', border: 'rgb(59, 130, 246)' },
-      humi: { bg: 'rgba(34, 197, 94, 0.1)', border: 'rgb(34, 197, 94)' },
-      humidity: { bg: 'rgba(34, 197, 94, 0.1)', border: 'rgb(34, 197, 94)' },
-      pressure: { bg: 'rgba(168, 85, 247, 0.1)', border: 'rgb(168, 85, 247)' },
-      light: { bg: 'rgba(251, 191, 36, 0.1)', border: 'rgb(251, 191, 36)' }
-    }
+    // Get all fields to determine index
+    const allFields = availableFields.value.filter(f => f !== 'all')
+    const fieldIndex = allFields.indexOf(fieldName)
 
-    const key = fieldName.toLowerCase()
-    for (const [colorKey, value] of Object.entries(colors)) {
-      if (key.includes(colorKey)) return value
-    }
-
-    return { bg: 'rgba(156, 163, 175, 0.1)', border: 'rgb(156, 163, 175)' }
+    // Use modulo to cycle through colors if more fields than colors
+    const colorIndex = fieldIndex >= 0 ? fieldIndex % colorPalette.length : 0
+    return colorPalette[colorIndex]
   }
 
   return {

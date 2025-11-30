@@ -42,12 +42,13 @@ import {
   LineElement,
   PointElement,
   LinearScale,
-  CategoryScale,
+  TimeScale,
   Title,
   Tooltip,
   Legend,
   Filler
 } from 'chart.js'
+import 'chartjs-adapter-date-fns'
 
 // Register Chart.js components
 Chart.register(
@@ -55,7 +56,7 @@ Chart.register(
   LineElement,
   PointElement,
   LinearScale,
-  CategoryScale,
+  TimeScale,
   Title,
   Tooltip,
   Legend,
@@ -113,26 +114,23 @@ const updateChart = () => {
 
   console.log('📈 Updating chart with field:', selectedDataField.value)
 
-  // Get data from composable
-  const labels = getChartLabels()
-
   // Destroy existing chart
   if (chartInstance) {
     chartInstance.destroy()
     chartInstance = null
   }
 
-  // Create datasets
+  // Create datasets with time-based data points
   let datasets = []
 
   if (selectedDataField.value === 'all') {
     // Show all fields
     const allFields = availableFields.value.filter(f => f !== 'all')
     datasets = allFields.map(field => {
-      const values = dataPoints.value.map(point => {
-        const value = point.data?.[field]
-        return parseFloat(value) || 0
-      })
+      const values = dataPoints.value.map(point => ({
+        x: new Date(point.timestamp),
+        y: parseFloat(point.data?.[field]) || 0
+      }))
       const colors = getFieldColor(field)
       return {
         label: formatFieldName(field),
@@ -141,7 +139,7 @@ const updateChart = () => {
         backgroundColor: colors.bg,
         borderWidth: 2,
         fill: false,
-        tension: 0.4,
+        tension: 0,
         pointRadius: 3,
         pointHoverRadius: 5,
         pointBackgroundColor: colors.border,
@@ -151,7 +149,10 @@ const updateChart = () => {
     })
   } else {
     // Show single field
-    const values = getChartValues()
+    const values = dataPoints.value.map(point => ({
+      x: new Date(point.timestamp),
+      y: parseFloat(point.data?.[selectedDataField.value]) || 0
+    }))
     const colors = getFieldColor(selectedDataField.value)
     datasets = [{
       label: formatFieldName(selectedDataField.value),
@@ -160,7 +161,7 @@ const updateChart = () => {
       backgroundColor: colors.bg,
       borderWidth: 2,
       fill: true,
-      tension: 0.4,
+      tension: 0,
       pointRadius: 4,
       pointHoverRadius: 6,
       pointBackgroundColor: colors.border,
@@ -175,12 +176,19 @@ const updateChart = () => {
   chartInstance = new Chart(ctx, {
     type: 'line',
     data: {
-      labels: labels,
       datasets: datasets
     },
     options: {
       responsive: true,
       maintainAspectRatio: false,
+      animation: false,
+      transitions: {
+        active: {
+          animation: {
+            duration: 0
+          }
+        }
+      },
       interaction: {
         mode: 'index',
         intersect: false
@@ -217,6 +225,16 @@ const updateChart = () => {
       },
       scales: {
         x: {
+          type: 'time',
+          time: {
+            displayFormats: {
+              millisecond: 'HH:mm:ss',
+              second: 'HH:mm:ss',
+              minute: 'HH:mm',
+              hour: 'HH:mm'
+            },
+            tooltipFormat: 'MMM d, HH:mm:ss'
+          },
           display: true,
           grid: {
             display: true,
